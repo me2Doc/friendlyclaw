@@ -1,5 +1,9 @@
 # FriendlyClaw 🦅
 
+<p align="center">
+  <img src="assets/mascot.png" width="300" alt="FriendlyClaw Mascot">
+</p>
+
 **Your personal AI companion. Self-hosted. Remembers everything.**
 
 FriendlyClaw is an open-source AI companion you fully own. Define its personality, connect it to Telegram or run it in your terminal, and it remembers every conversation. Bring your own model — Gemini, GPT, Claude, local LLM, anything.
