@@ -1,10 +1,11 @@
 import asyncio
+import os
 from core.agent import chat
 from core.onboarding import (
     get_onboarding_state, process_onboarding_answer, get_welcome_message
 )
 from memory.memory import init_db, get_profile, clear_user
-from skills.skills import get_skill_prompt, get_help_text
+from skills.skills import get_skill_prompt, get_help_text, get_all_skills
 
 USER_ID = "cli_user"
 
@@ -74,15 +75,18 @@ async def cli_chat():
                 break
             continue
 
-        # Check skill triggers
+        # Check skill triggers dynamically
         skill_prompt = None
         clean_text = user_input
-        for cmd in ["/analyze", "/redflag", "/reply", "/opener", "/vent", "/advice"]:
-            if user_input.startswith(cmd):
-                skill_prompt = get_skill_prompt(cmd)
-                clean_text = user_input[len(cmd):].strip()
+        all_skills = get_all_skills()
+        
+        for skill_name, skill in all_skills.items():
+            trigger = skill.get("trigger")
+            if trigger and user_input.startswith(trigger) and not skill.get("system"):
+                skill_prompt = get_skill_prompt(trigger)
+                clean_text = user_input[len(trigger):].strip()
                 if not clean_text:
-                    clean_text = f"User triggered {cmd} — ask what they want."
+                    clean_text = f"User triggered {trigger} — ask what they want."
                 break
 
         message = f"[SKILL: {skill_prompt}]\n\n{clean_text}" if skill_prompt else user_input

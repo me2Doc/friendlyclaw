@@ -14,7 +14,7 @@ from memory.memory import (
     init_db, get_memories, get_facts,
     clear_user, save_profile, get_profile
 )
-from skills.skills import get_skill_prompt, get_help_text
+from skills.skills import get_skill_prompt, get_help_text, get_all_skills
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -66,15 +66,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-    # Check for skill triggers
+    # Check for skill triggers dynamically
     skill_prompt = None
     clean_text = text
-    for cmd in ["/analyze", "/redflag", "/reply", "/opener", "/vent", "/advice"]:
-        if text.startswith(cmd):
-            skill_prompt = get_skill_prompt(cmd)
-            clean_text = text[len(cmd):].strip()
+    all_skills = get_all_skills()
+    
+    for skill_name, skill in all_skills.items():
+        trigger = skill.get("trigger")
+        if trigger and text.startswith(trigger) and not skill.get("system"):
+            skill_prompt = get_skill_prompt(trigger)
+            clean_text = text[len(trigger):].strip()
             if not clean_text:
-                clean_text = f"User triggered {cmd} skill — ask them what they want to analyze/discuss."
+                clean_text = f"User triggered {trigger} skill — ask them what they want to analyze/discuss."
             break
 
     if skill_prompt:

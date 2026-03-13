@@ -47,6 +47,19 @@ The `friendlyclaw.sh` script is an automated elite installer that handles enviro
 | **`/memory`** | Access what FriendlyClaw has learned about you across all sessions. |
 | **`/advice`** | Get direct, unfiltered strategic advice based on your history. |
 
+### 🧩 Add Custom Skills
+FriendlyClaw is designed for modularity. You can add new skills without touching the core code. Simply drop a `.json` file into `skills/custom/`.
+
+Example `skills/custom/joke.json`:
+```json
+{
+    "trigger": "/joke",
+    "description": "Tell a funny joke",
+    "prompt": "Tell a joke that is actually funny and matches the user's style."
+}
+```
+The bot will automatically detect the new command and add it to `/help`.
+
 ---
 
 ## 🔌 Bring Your Own Brain
