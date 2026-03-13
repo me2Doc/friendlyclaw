@@ -5,12 +5,16 @@ import asyncio
 from dotenv import load_dotenv
 from memory.memory import init_db
 from tools.openclaw_bridge import check_gateway_health
+from tools.config_sync import sync_openclaw_config
 
 load_dotenv()
 init_db()
 
 def start_openclaw_gateway():
     """Starts the OpenClaw gateway in the background if it's not already running."""
+    # Ensure system_body config is synced with .env first
+    sync_openclaw_config()
+    
     gateway_script = os.path.join(os.getcwd(), "system_body", "openclaw.mjs")
     if not os.path.exists(gateway_script):
         print("Warning: OpenClaw gateway script (system_body/openclaw.mjs) not found. System tools may be unavailable.")
