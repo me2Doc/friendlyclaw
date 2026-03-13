@@ -14,6 +14,8 @@ import google.generativeai as genai
 from google.generativeai import types
 from openai import OpenAI
 from tools.openclaw_bridge import send_command
+from tools.web_intelligence import deep_read_url
+from core.scheduler import schedule_mission, list_missions
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +33,34 @@ logger = logging.getLogger("FriendlyClaw")
 def get_tools_schema():
     """Returns the tool definitions including dynamic custom skills."""
     base_tools = [
+        {
+            "name": "schedule_mission",
+            "description": "Schedule a proactive mission (AI prompt) to run at a specific time using a cron expression. Use this for system monitoring, daily briefings, or periodic tasks.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "cron": {"type": "string", "description": "Standard 5-field cron (min hour day month dow). e.g. '0 8 * * *' for 8 AM daily."},
+                    "mission_prompt": {"type": "string", "description": "The strategic instruction for the AI to execute during the mission."}
+                },
+                "required": ["cron", "mission_prompt"]
+            }
+        },
+        {
+            "name": "list_missions",
+            "description": "List all active scheduled missions.",
+            "parameters": {"type": "object", "properties": {}}
+        },
+        {
+            "name": "deep_read_url",
+            "description": "Perform a deep, clean read of a specific URL to extract its main content. Best for articles, documentation, or long threads.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "The full URL to read."}
+                },
+                "required": ["url"]
+            }
+        },
         {
             "name": "run_shell",
             "description": "Execute a shell command on the host system. High-impact commands require user confirmation.",
@@ -104,34 +134,45 @@ def get_tools_schema():
 # --- Model & Embedding Helpers ---
 
 def get_model_client():
-    provider = os.getenv("MODEL_PROVIDER", "gemini").lower()
+    """Returns the first available model client based on .env priority."""
     model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
     
-    try:
-        if provider == "gemini":
-            api_key = os.getenv("GEMINI_API_KEY")
-            if not api_key:
-                raise ValueError("GEMINI_API_KEY not found in environment")
-            genai.configure(api_key=api_key)
+    # Priority 1: Gemini
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if gemini_key:
+        try:
+            genai.configure(api_key=gemini_key)
             return "gemini", genai.GenerativeModel(
                 model_name=model_name,
                 tools=get_tools_schema()
             )
-        
-        elif provider in ["openai", "openrouter", "custom"]:
-            api_key = os.getenv(f"{provider.upper()}_API_KEY") or os.getenv("CUSTOM_API_KEY")
-            base_url = None
-            if provider == "openrouter":
-                base_url = "https://openrouter.ai/api/v1"
-            elif provider == "custom":
-                base_url = os.getenv("CUSTOM_BASE_URL", "http://localhost:8317")
-            
-            return "openai", OpenAI(api_key=api_key, base_url=base_url)
-        else:
-            raise ValueError(f"Unknown MODEL_PROVIDER: {provider}")
+        except Exception as e:
+            logger.warning(f"Failed to init Gemini client: {e}. Trying fallback...")
+
+    # Priority 2: OpenRouter
+    or_key = os.getenv("OPENROUTER_API_KEY")
+    if or_key:
+        try:
+            client = OpenAI(api_key=or_key, base_url="https://openrouter.ai/api/v1")
+            return "openai", client
+        except Exception as e:
+            logger.warning(f"Failed to init OpenRouter client: {e}. Trying fallback...")
+
+    # Priority 3: OpenAI
+    oa_key = os.getenv("OPENAI_API_KEY")
+    if oa_key:
+        try:
+            return "openai", OpenAI(api_key=oa_key)
+        except Exception as e:
+            logger.warning(f"Failed to init OpenAI client: {e}. Trying fallback...")
+
+    # Priority 4: Custom (Ollama/Local)
+    custom_url = os.getenv("CUSTOM_BASE_URL", "http://localhost:8317")
+    try:
+        return "openai", OpenAI(api_key=os.getenv("CUSTOM_API_KEY", "fake"), base_url=custom_url)
     except Exception as e:
-        logger.error(f"Error initializing model client: {e}")
-        raise
+        logger.error(f"All model providers failed: {e}")
+        raise ValueError("No valid model provider found. Please check your .env file.")
 
 async def get_embedding(text: str) -> list:
     """Generates a 768-dim embedding using Gemini. Forced to 768 for sqlite-vec compatibility."""
@@ -192,6 +233,17 @@ CORE DIRECTIVES:
 async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: str):
     """Executes tools and handles confirmation / skill logic."""
     
+    if name == "schedule_mission":
+        cron, prompt = args.get("cron"), args.get("mission_prompt")
+        return schedule_mission(user_id, cron, prompt)
+
+    if name == "list_missions":
+        return {"status": "success", "missions": list_missions(user_id)}
+
+    if name == "deep_read_url":
+        url = args.get("url")
+        return {"status": "success", "content": deep_read_url(url)}
+
     if name == "remember_info":
         key, value = args.get("key"), args.get("value")
         mem_id = save_memory(user_id, key, value)
