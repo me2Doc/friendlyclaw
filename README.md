@@ -4,15 +4,28 @@
   <img src="assets/mascot.png" width="300" alt="FriendlyClaw Mascot">
 </p>
 
-**Your personal AI companion. Self-hosted. Remembers everything.**
-
-FriendlyClaw is an open-source AI companion you fully own. Define its personality, connect it to Telegram or run it in your terminal, and it remembers every conversation. Bring your own model — Gemini, GPT, Claude, local LLM, anything.
-
-Not a chatbot. Not a product. Yours.
+<p align="center">
+  <strong>Your self-hosted, persistent AI companion. Not an assistant. A partner.</strong>
+</p>
 
 ---
 
-## Install
+FriendlyClaw is more than a chatbot—it’s an **Elite Personal Brain** that lives on your infrastructure. It doesn’t just answer questions; it remembers your history, understands your personality, and provides strategic analysis of your life, conversations, and decisions.
+
+### 🛡️ Fully Owned. 🧠 Long-Term Memory. 🧬 Model Agnostic.
+
+Most AIs are products you rent. **FriendlyClaw is a platform you own.** 
+
+- **Total Sovereignty:** Runs on your server, your laptop, or the cloud. No corporate monitoring.
+- **Eternal Memory:** Uses a local SQLite brain to remember every fact, event, and context you share.
+- **Adaptive Personality:** You define who it is—from a direct strategic advisor to a casual companion.
+- **Multimodal:** Send text, code, or screenshots. It sees what you see.
+
+---
+
+## ⚡ Quick Start
+
+Deploy your companion in under 60 seconds.
 
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
@@ -20,126 +33,70 @@ cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
 
-That's it. The script handles everything — dependencies, config, model selection, platform setup.
+The `friendlyclaw.sh` script is an automated elite installer that handles environment setup, dependencies, and initial personality configuration.
 
 ---
 
-## What It Does
+## 🛠️ Core Capabilities
 
-- **Remembers everything** — persistent SQLite memory across all sessions
-- **You define the personality** — name it, give it a tone, a style, an attitude
-- **Analyzes anything** — paste conversations, screenshots, situations
-- **Model agnostic** — Gemini, OpenAI, OpenRouter, local LLM, custom endpoint
-- **Multi-platform** — Telegram bot or CLI
-- **Skill system** — built-in commands for common tasks
-
----
-
-## Commands
-
-| Command | What it does |
-|---------|-------------|
-| `/analyze` | Break down any conversation or situation |
-| `/redflag` | Scan for red flags |
-| `/reply` | Get reply suggestions |
-| `/opener` | Generate a personalized opener |
-| `/vent` | Just talk — it listens |
-| `/advice` | Direct, no-BS advice |
-| `/memory` | See what it remembers about you |
-| `/forget` | Wipe memory and start fresh |
-| `/model` | Check or switch model |
-| `/help` | All commands |
-
-Or just talk to it normally.
+| Skill | Description |
+| :--- | :--- |
+| **`/analyze`** | Deconstruct complex social situations, screenshots, or chat logs. |
+| **`/redflag`** | Scan interactions for manipulation, toxicity, or hidden patterns. |
+| **`/opener`** | Generate high-impact, personalized openers based on your style. |
+| **`/memory`** | Access what FriendlyClaw has learned about you across all sessions. |
+| **`/advice`** | Get direct, unfiltered strategic advice based on your history. |
 
 ---
 
-## Model Support
+## 🔌 Bring Your Own Brain
 
-Change `MODEL_PROVIDER` and `MODEL_NAME` in your `.env`:
+FriendlyClaw is model-agnostic. Use the best models on the market or run locally for 100% privacy.
 
-| Provider | Example models | Notes |
-|----------|---------------|-------|
-| `gemini` | `gemini-2.0-flash`, `gemini-2.5-pro` | Free tier available |
-| `openai` | `gpt-4o`, `gpt-4o-mini` | Paid |
-| `openrouter` | `google/gemini-pro`, `meta-llama/llama-3.1-8b` | 100+ models, some free |
-| `custom` | anything | Ollama, CLIProxyAPI, LM Studio, any OpenAI-compatible endpoint |
-
-Switch model mid-session: `/model gemini-2.5-pro`
+- **Cloud:** Gemini 2.0/3.0, GPT-4o, Claude 3.5.
+- **Aggregators:** OpenRouter (access 100+ models).
+- **Local:** Ollama, LM Studio, or any OpenAI-compatible API.
 
 ---
 
-## Deploy 24/7 (Free)
+## 🚀 Deploy 24/7 (Railway / VPS)
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
 
-Add these env vars on Railway:
-- `TELEGRAM_BOT_TOKEN`
-- `GEMINI_API_KEY` (or your chosen provider's key)
-- `MODEL_PROVIDER=gemini`
-- `MODEL_NAME=gemini-2.0-flash`
-- `PLATFORM=telegram`
+1. Fork this repo.
+2. Connect to Railway.
+3. Add your `TELEGRAM_BOT_TOKEN` and `GEMINI_API_KEY`.
+4. Set `PLATFORM=telegram`.
 
 ---
 
-## Self-Host on Your Server
+## 📂 Architecture
 
-```bash
-git clone https://github.com/me2Doc/friendlyclaw
-cd friendlyclaw
-cp .env.example .env
-# Edit .env with your keys
-pip install -r requirements.txt
-python3 main.py --telegram  # or --cli
-```
-
----
-
-## Project Structure
+FriendlyClaw is built for modularity and speed:
 
 ```
 friendlyclaw/
-├── main.py              # Entry point
-├── friendlyclaw.sh      # One-command install
-├── requirements.txt
-├── .env.example
-├── core/
-│   ├── agent.py         # Core AI logic, model routing
-│   └── onboarding.py    # Personality setup flow
-├── memory/
-│   └── memory.py        # SQLite persistent memory
-├── skills/
-│   └── skills.py        # Built-in skill system
-├── platforms/
-│   ├── telegram_bot.py  # Telegram interface
-│   └── cli.py           # Terminal interface
-└── data/                # Local DB (gitignored)
+├── main.py              # Single entry point
+├── core/                # Agent logic & personality engines
+├── memory/              # SQLite persistent long-term memory
+├── platforms/           # Telegram & CLI interfaces
+├── skills/              # Specialized analysis modules
+└── assets/              # Branding & media
 ```
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-- [ ] WhatsApp support
-- [ ] Discord support  
-- [ ] Voice message support
-- [ ] Web UI
-- [ ] Plugin system for custom skills
-- [ ] Photo analysis of profiles/people
-- [ ] Scheduled check-ins
+- [ ] **WhatsApp & Discord Integration**
+- [ ] **Voice-to-Voice (Whisper/TTS) support**
+- [ ] **Real-time Web Dashboard**
+- [ ] **Vision-based profile analysis**
 
 ---
 
-## Contributing
+## 📜 License
 
-PRs welcome. Keep it lean and real — no bloat, no corporate patterns.
+MIT. Take it, fork it, make it yours.
 
----
-
-## License
-
-MIT — take it, fork it, build on it.
-
----
-
-*Part of the Claw ecosystem.*
+*Built for the Claw Ecosystem.*
