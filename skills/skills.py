@@ -5,43 +5,28 @@ from pathlib import Path
 
 logger = logging.getLogger("FriendlyClaw.Skills")
 
-# Core skills that are always included
+# Core operational modules
 CORE_SKILLS = {
     "analyze": {
         "trigger": "/analyze",
-        "description": "Analyze any conversation, situation, or text",
-        "prompt": "The user wants you to analyze something. Break it down: what's actually happening, what the other person's intentions seem to be, what the user should know, and what they should do. Be direct. No fluff."
+        "description": "Comprehensive analysis of technical data, logs, or strategic contexts",
+        "prompt": "Perform a deep-dive analysis. Identify core patterns, technical implications, and strategic outcomes. Provide a structured report with actionable insights."
     },
     "audit": {
         "trigger": "/audit",
-        "description": "Scan a situation or conversation for patterns, risks, or hidden intentions",
-        "prompt": "Analyze what the user shares for any underlying patterns, risks, or hidden intentions. Be specific — list your observations clearly and explain why they matter. Provide a balanced verdict on the situation."
+        "description": "Security and intent audit for external inputs or system states",
+        "prompt": "Execute an audit. Identify potential risks, hidden vectors, or misalignments. Provide a high-confidence assessment of the input's integrity."
     },
-    "reply": {
-        "trigger": "/reply",
-        "description": "Help write a reply to a message",
-        "prompt": "The user needs help writing a reply. Give them 2-3 options with different tones. Match their personality and communication style. Label each option clearly (e.g. Direct / Playful / Neutral)."
-    },
-    "opener": {
-        "trigger": "/opener",
-        "description": "Generate a conversation opener",
-        "prompt": "Write an opener for the user based on what they describe. Make it personal and specific — not generic. Give 3 options with different energies. If they haven't given enough info, ask first."
-    },
-    "vent": {
-        "trigger": "/vent",
-        "description": "Just listen and respond like a friend",
-        "prompt": "The user needs to vent. Listen. Respond like a real friend would — acknowledge what they're feeling, give your honest take if they seem to want it, but don't turn this into a therapy session. Keep it real."
-    },
-    "advice": {
-        "trigger": "/advice",
-        "description": "Get direct advice on any situation",
-        "prompt": "Give direct, actionable advice. Don't hedge. Don't add disclaimers. Tell them what you'd actually do in their position and why."
+    "consult": {
+        "trigger": "/consult",
+        "description": "Strategic consultation on complex decision-making or system architecture",
+        "prompt": "Provide high-agency strategic advice. Base your recommendations on the available context and long-term objectives. Avoid generic disclaimers; provide a clear path forward."
     },
     # System commands handled by platform logic
-    "memory": {"trigger": "/memory", "description": "See what I remember about you", "system": True},
-    "forget": {"trigger": "/forget", "description": "Wipe memory and start fresh", "system": True},
-    "model": {"trigger": "/model", "description": "Switch AI model", "system": True},
-    "help": {"trigger": "/help", "description": "Show all commands", "system": True}
+    "memory": {"trigger": "/memory", "description": "Query the persistent memory store", "system": True},
+    "forget": {"trigger": "/forget", "description": "Reset local memory and operational profile", "system": True},
+    "model": {"trigger": "/model", "description": "Hot-swap the active inference model", "system": True},
+    "help": {"trigger": "/help", "description": "Display system documentation and capabilities", "system": True}
 }
 
 CUSTOM_SKILLS_DIR = Path("skills/custom")
@@ -57,13 +42,12 @@ def load_custom_skills() -> dict:
         try:
             with open(skill_file, "r") as f:
                 skill_data = json.load(f)
-                # Basic validation: must have trigger and description
                 if "trigger" in skill_data and "prompt" in skill_data:
                     skill_name = skill_file.stem
                     skills[skill_name] = skill_data
-                    logger.info(f"Loaded custom skill: {skill_name} ({skill_data['trigger']})")
+                    logger.info(f"Loaded extension: {skill_name} ({skill_data['trigger']})")
         except Exception as e:
-            logger.error(f"Failed to load custom skill {skill_file}: {e}")
+            logger.error(f"Failed to load extension {skill_file}: {e}")
     
     return skills
 
@@ -96,9 +80,8 @@ def get_openclaw_skills() -> list:
 def get_help_text() -> str:
     """Generates help text based on all currently loaded skills"""
     all_skills = get_all_skills()
-    lines = ["*Available Brain commands:*\n"]
+    lines = ["*Operational Modules (Core):*\n"]
     
-    # Sort triggers alphabetically
     sorted_skills = sorted(all_skills.items(), key=lambda x: x[1]['trigger'])
     
     for skill_name, skill in sorted_skills:
@@ -106,8 +89,8 @@ def get_help_text() -> str:
     
     oc_skills = get_openclaw_skills()
     if oc_skills:
-        lines.append("\n*Available System Body Skills (Just ask to use them):*\n")
+        lines.append("\n*System Execution Skills (Native Body):*\n")
         lines.append(", ".join([f"`{s}`" for s in oc_skills]))
 
-    lines.append("\nOr just talk to me normally.")
+    lines.append("\nInput may be provided in natural language.")
     return "\n".join(lines)

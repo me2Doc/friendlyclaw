@@ -1,41 +1,35 @@
-# FriendlyClaw 🦅 — Standalone AI Operator
+# FriendlyClaw 🦅 — Autonomous AI Operator
 
 <p align="center">
-  <img src="assets/mascot.png" width="300" alt="FriendlyClaw Mascot">
-</p>
-
-<p align="center">
-  <strong>The open-source AI companion with a system-level body. Powered by OpenClaw.</strong>
+  <strong>High-agency AI collaborator with system-level execution. Powered by OpenClaw.</strong>
 </p>
 
 ---
 
-FriendlyClaw is an **Elite Personal Brain** that lives on your infrastructure. It combines long-term persistent memory and strategic analysis with the physical system-execution capabilities of the **OpenClaw** ecosystem.
+FriendlyClaw is an **Autonomous AI Framework** designed for strategic collaboration and system management. It integrates persistent SQLite memory and diagnostic analysis with the comprehensive execution capabilities of **OpenClaw**.
 
-### 🛡️ Fully Owned. 🧠 Long-Term Memory. 🦾 System-Level Execution.
+### 🛡️ Data Sovereignty. 🧠 Persistent Context. 🦾 System Execution.
 
-- **Total Sovereignty:** Runs on your server, laptop, or cloud. You own the data.
-- **Eternal Memory:** Uses a local SQLite brain to remember facts across all sessions.
-- **Unified Body:** Ships with a built-in OpenClaw gateway to control your computer (Shell, UI, Media).
-- **Multimodal:** Process text, code, or screenshots. It sees and acts.
+- **Private Deployment:** Fully self-hosted on personal infrastructure. You own the model and the data.
+- **Persistent Logic:** Uses a local SQLite store to maintain context and directives across sessions.
+- **Unified Gateway:** Includes a built-in OpenClaw gateway for system control (Shell, UI, Media, 50+ Skills).
+- **High Agency:** Designed to execute complex system tasks and provide objective strategic analysis.
 
 ---
 
-## ⚡ Quick Start
-
-Deploy your standalone operator in under 60 seconds.
+## ⚡ Deployment
 
 ### Option 1: Docker (Recommended)
-The cleanest way to run the Brain (Python) and Body (Node.js) together.
+Containerized environment for Core (Python) and Gateway (Node.js).
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
 cd friendlyclaw
 cp .env.example .env
-# Edit .env with your API keys
+# Configure .env with API keys
 docker compose up -d
 ```
 
-### Option 2: Local Script
+### Option 2: Local Environment
 Requires Node.js 22+ and Python 3.10+.
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
@@ -45,46 +39,41 @@ chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 
 ---
 
-## 🛠️ Integrated Capabilities
+## 🛠️ Operational Architecture
 
-| Layer | Features |
+| Layer | Capabilities |
 | :--- | :--- |
-| **Brain (FriendlyClaw)** | `/analyze`, `/audit`, `/memory`, `/advice`, `/reply`, `/opener`. |
-| **Body (OpenClaw)** | `run_shell`, `type`, `click`, `screenshot`, and 50+ system skills. |
-| **Modular Skills** | Add any OpenClaw-compatible skill to `system_body/skills/`. |
-
-### 🧩 System Control
-FriendlyClaw is physically connected to your system. When you ask it to perform an action (e.g., *"Open Chromium"* or *"Search for files"*), it uses its internal OpenClaw body to execute the command directly on your machine.
+| **Logic (FriendlyClaw)** | `/analyze`, `/audit`, `/consult`, `/memory`. |
+| **Execution (OpenClaw)** | `run_shell`, `type`, `click`, `screenshot`, and 50+ system skills. |
+| **Extensibility** | Load any OpenClaw-compatible skill into `system_body/skills/`. |
 
 ---
 
-## 🔌 Model Agnostic
+## 🔌 Inference Models
 
-Use any model as the "Brain":
-- **Cloud:** Gemini 2.0/3.0, GPT-4o, Claude 3.5.
+FriendlyClaw is model-agnostic and interfaces via OpenAI-compatible APIs:
+- **Cloud:** Gemini, GPT-4o, Claude 3.5.
 - **Aggregators:** OpenRouter.
-- **Local:** Ollama, LM Studio, or any OpenAI-compatible API.
+- **Local:** Ollama, LM Studio, or custom VLLM endpoints.
 
 ---
 
-## 📂 Standalone Architecture
-
-FriendlyClaw is a unified system:
+## 📂 System Structure
 
 ```
 friendlyclaw/
-├── main.py              # Unified entry point (Starts Brain + Body)
-├── core/                # Agent logic & personality engine
-├── memory/              # SQLite persistent long-term memory
-├── system_body/         # Built-in OpenClaw execution engine (Gateway + 50+ Skills)
-├── platforms/           # Telegram & CLI interfaces
-└── skills/              # Specialized analysis modules
+├── main.py              # Unified entry point (Initializes Core + Gateway)
+├── core/                # Agent logic & operational persona engine
+├── memory/              # SQLite persistent context store
+├── system_body/         # OpenClaw execution engine (Built-in)
+├── platforms/           # Telegram & CLI communication layers
+└── skills/              # Diagnostic & strategic modules
 ```
 
 ---
 
-## 🚀 Public & Extensible
-Built for the **Claw Ecosystem**. Take it, fork it, and build your own operator.
+## 🚀 Vision
+Built for the **Claw Ecosystem**. A strategic tool for elite technical operators.
 
 ---
 
