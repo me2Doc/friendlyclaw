@@ -136,6 +136,31 @@ async def cmd_forget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     clear_user(str(update.effective_user.id))
     await update.message.reply_text("Memory wiped.")
 
+async def cmd_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from memory.memory import get_user_tasks
+    user_id = str(update.effective_user.id)
+    tasks = get_user_tasks(user_id)
+    if not tasks:
+        await update.message.reply_text("No active tasks.")
+        return
+    text = "*Strategic Task Board:*\n\n"
+    for t in tasks:
+        emoji = "⏳" if t['status'] == "pending" else "⚙️" if t['status'] == "running" else "✅" if t['status'] == "completed" else "❌"
+        text += f"{emoji} *#{t['id']}*: {t['objective'][:50]}... ({t['status']})\n"
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+async def cmd_synthesize(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from memory.memory import get_task
+    if not context.args:
+        await update.message.reply_text("Usage: `/synthesize [task_id]`")
+        return
+    task_id = context.args[0]
+    task = get_task(task_id)
+    if not task or not task['result']:
+        await update.message.reply_text("Task not found or result not ready.")
+        return
+    await update.message.reply_text(f"*Result for Task #{task_id}:*\n\n{task['result']}", parse_mode="Markdown")
+
 async def cmd_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
         os.environ["MODEL_NAME"] = context.args[0]
@@ -149,6 +174,8 @@ def run_telegram():
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("memory", cmd_memory))
     app.add_handler(CommandHandler("forget", cmd_forget))
+    app.add_handler(CommandHandler("tasks", cmd_tasks))
+    app.add_handler(CommandHandler("synthesize", cmd_synthesize))
     app.add_handler(CommandHandler("model", cmd_model))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))

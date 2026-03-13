@@ -69,6 +69,28 @@ async def cli_chat():
             print(f"\n{get_help_text().replace('*', '').replace('`', '')}\n")
             continue
 
+        if user_input == "/tasks":
+            from memory.memory import get_user_tasks
+            tasks = get_user_tasks(USER_ID)
+            print("\n--- Strategic Task Board ---")
+            for t in tasks:
+                print(f"#{t['id']} [{t['status']}]: {t['objective'][:60]}...")
+            print()
+            continue
+
+        if user_input.startswith("/synthesize"):
+            from memory.memory import get_task
+            parts = user_input.split()
+            if len(parts) < 2:
+                print("Usage: /synthesize [task_id]")
+                continue
+            task = get_task(int(parts[1]))
+            if task and task['result']:
+                print(f"\n--- Result for Task #{parts[1]} ---\n{task['result']}\n")
+            else:
+                print("Task result not ready.")
+            continue
+
         if user_input == "/forget":
             confirm = input("Wipe all memory? (yes/no): ")
             if confirm.lower() == "yes":

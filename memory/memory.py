@@ -74,6 +74,71 @@ def init_db():
                 timestamp TEXT NOT NULL
             )
         """)
+        # Strategic Task Board (Swarm Logic)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                status TEXT NOT NULL, -- pending, running, completed, failed
+                objective TEXT NOT NULL,
+                result TEXT,
+                timestamp TEXT NOT NULL
+            )
+        """)
+        # Audit Trail (Command Transparency)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                command TEXT NOT NULL,
+                output TEXT,
+                timestamp TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+
+def add_task(user_id: str, objective: str):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO tasks (user_id, status, objective, timestamp)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, "pending", objective, datetime.now().isoformat()))
+        conn.commit()
+        return c.lastrowid
+
+def update_task(task_id: int, status: str, result: str = None):
+    with get_db() as conn:
+        c = conn.cursor()
+        if result:
+            c.execute("UPDATE tasks SET status=?, result=? WHERE id=?", (status, result, task_id))
+        else:
+            c.execute("UPDATE tasks SET status=? WHERE id=?", (status, task_id))
+        conn.commit()
+
+def get_user_tasks(user_id: str, limit: int = 10):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, status, objective, result FROM tasks WHERE user_id=? ORDER BY timestamp DESC LIMIT ?", (user_id, limit))
+        rows = c.fetchall()
+        return [{"id": r[0], "status": r[1], "objective": r[2], "result": r[3]} for r in rows]
+
+def get_task(task_id: int):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, status, objective, result FROM tasks WHERE id=?", (task_id,))
+        r = c.fetchone()
+        if r:
+            return {"id": r[0], "status": r[1], "objective": r[2], "result": r[3]}
+        return None
+
+def add_audit_log(user_id: str, command: str, output: str):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO audit_log (user_id, command, output, timestamp)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, command, output, datetime.now().isoformat()))
         conn.commit()
 
 def save_pending_action(action_id: str, user_id: str, action_data: dict, message: str):
