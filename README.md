@@ -1,43 +1,35 @@
-# FriendlyClaw 🦅 — Autonomous AI Operator
+# FriendlyClaw 🦅 — Pro-Grade AI Strategic Partner
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/Version-1.2.0--Alpha-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Status-Pro--Grade-blueviolet.svg" alt="Status">
+  <img src="https://img.shields.io/badge/Memory-Semantic--RAG-green.svg" alt="Memory">
   <img src="https://img.shields.io/badge/Body-OpenClaw-green.svg" alt="Powered by OpenClaw">
-  <img src="https://img.shields.io/badge/Architecture-Brain_%2B_Body-blueviolet.svg" alt="Architecture">
 </p>
 
 <p align="center">
-  <strong>High-agency AI collaborator with system-level execution. Powered by OpenClaw.</strong>
+  <strong>The High-Agency AI Operator for Every User.</strong><br>
+  Cross-platform (CLI/Telegram) system control with persistent semantic memory.
 </p>
 
 ---
 
-## 🦾 Unified Intelligence & Action
+## 🦾 Beyond a Chatbot: Your Digital Operative
 
-FriendlyClaw is an **Autonomous AI Framework** that bridges the gap between conversational intelligence and physical system execution. It is built on a "Brain & Body" architecture:
+FriendlyClaw is not a standard AI assistant. It is a **Pro High-Value Partner** designed to act with agency and precision. Whether you are a developer managing a server or a regular user seeking an intelligent system companion, FriendlyClaw bridge the gap between human intent and machine execution.
 
-- **The Brain (FriendlyClaw Core):** A Python-based intelligence layer with **Cognitive Persistence** (SQLite-backed long-term memory) and strategic analysis modules.
-- **The Body (OpenClaw Engine):** A Node.js-based execution gateway that provides direct access to your machine's shell, UI, media, and 50+ specialized system skills.
+### 💎 Why FriendlyClaw?
 
----
-
-## 🧠 Key Features
-
-### 🛡️ Data Sovereignty & Privacy
-100% self-hosted. Your persistent memories, interaction history, and system access tokens never leave your infrastructure. You choose the inference model (Local or Cloud).
-
-### 🧠 Cognitive Persistence (Eternal Memory)
-Unlike standard chatbots that forget once the session ends, FriendlyClaw uses a local SQLite brain to store every fact, preference, and historical context about you. It evolves into a **high-fidelity digital operative** that understands your specific workflows.
-
-### 🦾 High-Agency Execution
-FriendlyClaw doesn't just suggest actions—it executes them. Interfaced via the OpenClaw protocol, it can operate your shell, move your mouse, type on your behalf, and process system-level data in real-time.
+- **🧠 Eternal Semantic Memory (RAG):** Unlike basic LLMs that forget, FriendlyClaw uses vector search to retrieve relevant context from your entire history. It learns your style, your environment, and your preferences.
+- **🛡️ Vault-Grade Security:** "Human-in-the-Loop" architecture. Every sensitive system command is intercepted and requires your explicit approval (CLI or Telegram button) before execution.
+- **🦾 Native Tool Execution:** Zero-fragility interaction. FriendlyClaw uses native function calling to control your shell, UI, mouse, and keyboard with 100% reliability.
+- **🌍 Cross-Platform Agency:** Run your partner in your terminal or take it with you on **Telegram**. A unified command center that lives where you do.
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start (Setup in 2 Minutes)
 
-The fastest way to get FriendlyClaw up and running:
+FriendlyClaw is designed to be accessible for everyone. No complex configuration required:
 
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
@@ -45,100 +37,57 @@ cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
 
-The script will walk you through setting up your API keys and choosing between **CLI** or **Telegram** mode.
+The interactive wizard will walk you through:
+1.  **Platform Choice:** CLI (Terminal) or Telegram Bot.
+2.  **API Keys:** Setup for Gemini (Free/Recommended), OpenRouter, or OpenAI.
+3.  **Onboarding:** Your partner will introduce itself and learn your specific objectives.
 
 ---
 
-## 🤖 Telegram Bot Setup (If choosing Telegram)
+## 🤖 Telegram Bot Setup (Pro Guide)
 
-Setting up your bot only takes a minute:
+Take your partner anywhere:
 
-1.  **Open Telegram** and search for **@BotFather**.
-2.  Send `/newbot` and follow the prompts (give it a name and a username).
-3.  **Copy the API Token** provided by @BotFather.
-4.  Paste this token when the `friendlyclaw.sh` script asks for it.
-5.  Once the app is running, find your bot in Telegram and send **`/start`** to begin!
-
----
-
-## 🏗️ Requirements
-
-- **Python 3.10+**
-- **Node.js 22.12.0+** (Required for the OpenClaw "Body")
-- An API Key (Gemini is recommended and free!)
+1.  **Chat with @BotFather** on Telegram.
+2.  Create a `/newbot` and copy the **API Token**.
+3.  Paste the token into the `friendlyclaw.sh` wizard.
+4.  Find your bot, send **`/start`**, and your Pro Partner is live.
 
 ---
 
-## 🛠️ Operational Architecture
+## 🧩 Architectural Excellence
 
-FriendlyClaw presents a unified command set while delegating tasks between layers:
+FriendlyClaw operates on a "Brain & Body" architecture:
 
-| Module | Purpose | Example Triggers |
+| Component | Layer | Purpose |
 | :--- | :--- | :--- |
-| **Logic Layer** | Cognitive/Strategic Tasks | `/analyze`, `/audit`, `/consult`, `/memory` |
-| **Action Layer** | System Execution | `run_shell`, `type`, `click`, `screenshot` |
-| **System Skills** | Domain-Specific Tools | `xurl`, `spotify`, `gh-issues`, `weather` |
+| **The Brain** | Python | Strategic reasoning, Semantic RAG memory, and platform logic. |
+| **The Body** | OpenClaw | 50+ Native System Skills (Shell, Spotify, GitHub, Media). |
+| **The Bridge** | WebSocket | Ultra-low latency communication between reasoning and action. |
 
 ---
 
-## 🎯 Strategic Workflows
+## 🎯 Pro Use-Cases
 
-- **Context-Aware Coding:** Ask your partner to "Update the auth logic in my project" using the built-in `run_shell` and `gh-issues` skills.
-- **System Automation:** "Open Chromium and search for the latest documentation on VLLM."
-- **Persistent Memory:** FriendlyClaw remembers that you prefer certain coding styles or deployment environments and applies that context to future tasks without being reminded.
-- **Security Auditing:** Use `/audit` to analyze logs or external data for hidden patterns or misalignments.
-
----
-
-## 🧩 Extensibility
-
-FriendlyClaw supports a dual-skill architecture, allowing you to extend both its intelligence and its physical capabilities.
-
-### 1. Native System Skills (OpenClaw Body)
-To add new physical capabilities (e.g., controlling a new app or API), drop an OpenClaw-compatible skill folder into `system_body/skills/`.
-- FriendlyClaw will automatically detect these on boot.
-- The AI will understand how to use these new "muscles" natively.
-
-### 2. Logic Extensions (FriendlyClaw Brain)
-To add new analytical commands or persona-specific logic, drop a `.json` file into `skills/custom/`.
-Example `skills/custom/custom_audit.json`:
-```json
-{
-    "trigger": "/custom_audit",
-    "description": "Perform a specialized security audit",
-    "prompt": "Analyze the following for specific alignment with [Your Custom Policy]..."
-}
-```
+- **Strategic Partnering:** "Analyze my recent coding commits and suggest a security audit."
+- **System Automation:** "Take a screenshot of my dashboard every hour and notify me if the status changes."
+- **Persistent Memory:** "Remember that I prefer deploying to the staging server by default."
+- **Remote Control:** Use your Telegram bot to execute safe commands or query your machine's state from anywhere.
 
 ---
 
-## 🔌 Inference Models
+## 🏗️ Technical Requirements
 
-Model-agnostic and interfaces via OpenAI-compatible APIs:
-- **Cloud:** Gemini, GPT-4o, Claude 3.5.
-- **Aggregators:** OpenRouter (access 100+ models).
-- **Local:** Ollama, LM Studio, or custom VLLM endpoints.
-
----
-
-## 📂 System Structure
-
-```
-friendlyclaw/
-├── main.py              # Unified entry point (Initializes Core + Gateway)
-├── core/                # Agent logic & operational persona engine
-├── memory/              # SQLite persistent context store (The Brain)
-├── system_body/         # OpenClaw execution engine (The Body)
-├── platforms/           # Telegram & CLI communication layers
-└── skills/              # Strategic & diagnostic modules
-```
+- **Python 3.10+** (Core Reasoning)
+- **Node.js 22.12.0+** (System Execution)
+- **API Key:** Gemini (Free Tier available at Google AI Studio) or OpenAI.
 
 ---
 
 ## 🚀 Vision
-Built for the **Claw Ecosystem**. A strategic tool for elite technical operators who need a partner that acts as a digital extension of their own agency.
+FriendlyClaw is built for users who demand more than a simple chat interface. It is a tool of agency, designed to evolve alongside its user as a high-fidelity strategic partner.
 
 ---
 
 ## 📜 License
-MIT.
+MIT. Built for the **Claw Ecosystem**.
