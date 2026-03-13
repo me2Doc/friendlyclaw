@@ -1,9 +1,10 @@
 import os
+import json
 import asyncio
-from telegram import Update, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
-    filters, ContextTypes
+    CallbackQueryHandler, filters, ContextTypes
 )
 from core.agent import chat
 from core.onboarding import (
@@ -12,10 +13,10 @@ from core.onboarding import (
 )
 from memory.memory import (
     init_db, get_memories, get_facts,
-    clear_user, save_profile, get_profile
+    clear_user, save_profile, get_profile,
+    get_pending_action, delete_pending_action
 )
 from skills.skills import get_skill_prompt, get_help_text, get_all_skills
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -23,10 +24,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     state = get_onboarding_state(user_id)
     if state["done"]:
-        profile = get_profile(user_id)
-        name = profile.get("agent_name", "me")
         await update.message.reply_text(
-            f"Hey, I'm here. What's going on?",
+            "Hey, I'm here. What's going on?",
             reply_markup=ReplyKeyboardRemove()
         )
         return
@@ -37,154 +36,122 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=ReplyKeyboardRemove()
     )
 
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     text = update.message.text or ""
-
     state = get_onboarding_state(user_id)
 
-    # Still onboarding
     if not state["done"]:
         result = process_onboarding_answer(user_id, text)
         if result["done"]:
             agent_name = result.get("agent_name", "Buddy")
-            user_name = result.get("user_name", "friend")
             await update.message.reply_text(
-                f"Set. I'm *{agent_name}*.\n\n"
-                f"Talk to me whenever, {user_name}. "
-                f"I remember everything from here on out.\n\n"
-                f"Send /help to see what I can do.",
+                f"Set. I'm *{agent_name}*.\nTalk to me whenever. Send /help to see commands.",
                 parse_mode="Markdown"
             )
         else:
-            step = result["step"]
-            total = result["total"]
-            await update.message.reply_text(
-                f"[{step}/{total}] {result['next_question']}",
-                parse_mode="Markdown"
-            )
+            await update.message.reply_text(f"[{result['step']}/{result['total']}] {result['next_question']}")
         return
 
-    # Check for skill triggers dynamically
+    # Check for skill triggers
     skill_prompt = None
-    clean_text = text
     all_skills = get_all_skills()
-    
     for skill_name, skill in all_skills.items():
         trigger = skill.get("trigger")
         if trigger and text.startswith(trigger) and not skill.get("system"):
             skill_prompt = get_skill_prompt(trigger)
-            clean_text = text[len(trigger):].strip()
-            if not clean_text:
-                clean_text = f"User triggered {trigger} skill — ask them what they want to analyze/discuss."
+            text = text[len(trigger):].strip() or f"User triggered {trigger}."
             break
 
-    if skill_prompt:
-        message = f"[SKILL ACTIVE: {skill_prompt}]\n\nUser says: {clean_text}"
+    message = f"[SKILL: {skill_prompt}]\n\n{text}" if skill_prompt else text
+    await process_chat_request(update, user_id, message)
+
+async def process_chat_request(update: Update, user_id: str, message: str, confirmed_action: dict = None):
+    await update.effective_chat.send_action("typing")
+    result = await chat(user_id, message, confirmed_action=confirmed_action)
+
+    if "action_required" in result:
+        action_req = result["action_required"]
+        action_id = action_req["action_id"]
+
+        keyboard = [
+            [
+                InlineKeyboardButton("✅ Confirm", callback_data=f"conf_{action_id}"),
+                InlineKeyboardButton("❌ Cancel", callback_data=f"can_{action_id}")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.effective_message.reply_text(
+            f"🛡️ *Security Intercept*\n{action_req['display']}",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
     else:
-        message = text
+        reply = result.get("reply", "No response.")
+        await update.effective_message.reply_text(reply)
 
-    await update.message.chat.send_action("typing")
-    reply = await chat(user_id, message)
-    await update.message.reply_text(reply)
-
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    user_id = str(update.effective_user.id)
+    
+    if data.startswith("conf_"):
+        action_id = data[5:]
+        pending = get_pending_action(action_id)
+        if pending:
+            delete_pending_action(action_id)
+            await query.edit_message_text(f"✅ Executing: {pending['action']['parameters'].get('command', 'Action')}")
+            await process_chat_request(update, user_id, pending["message"], confirmed_action=pending["action"])
+        else:
+            await query.edit_message_text("❌ Action expired or already processed.")
+            
+    elif data.startswith("can_"):
+        action_id = data[5:]
+        delete_pending_action(action_id)
+        await query.edit_message_text("❌ Action cancelled.")
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    state = get_onboarding_state(user_id)
-
     photo = update.message.photo[-1]
     file = await context.bot.get_file(photo.file_id)
     image_bytes = bytes(await file.download_as_bytearray())
-
-    # If still in onboarding and on visual context step
-    if not state["done"]:
-        profile = get_profile(user_id)
-        step = profile.get("onboarding_step", 0)
-        from core.onboarding import QUESTIONS
-        if step < len(QUESTIONS) and QUESTIONS[step].get("accepts_photo"):
-            result = process_onboarding_answer(user_id, "[photo]", image_bytes=image_bytes)
-            if result["done"]:
-                await update.message.reply_text(
-                    f"Got it. I'll keep that in mind.\n\nSet. Talk to me whenever. Send /help to see commands.",
-                )
-            else:
-                await update.message.reply_text(result["next_question"], parse_mode="Markdown")
-            return
-
-    caption = update.message.caption or "Analyze this image and tell me what you see and what I should know."
-    await update.message.chat.send_action("typing")
-    reply = await chat(user_id, caption, image_bytes=image_bytes)
-    await update.message.reply_text(reply)
-
+    
+    caption = update.message.caption or "Analyze this image."
+    await update.effective_chat.send_action("typing")
+    result = await chat(user_id, caption, image_bytes=image_bytes)
+    await update.message.reply_text(result.get("reply", "Done."))
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(get_help_text(), parse_mode="Markdown")
 
-
 async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    memories = get_memories(user_id)
     facts = get_facts(user_id)
-
-    if not memories and not facts:
-        await update.message.reply_text("Nothing stored yet. Talk to me more.")
-        return
-
-    text = "*What I remember about you:*\n\n"
-    if facts:
-        text += "*Facts:*\n"
-        for f in facts[:15]:
-            text += f"• {f}\n"
-    if memories:
-        text += "\n*Notes:*\n"
-        for m in memories[:10]:
-            text += f"• [{m['key']}] {m['value']}\n"
-
+    text = "*Long-Term Context:*\n\n" + "\n".join([f"• {f}" for f in facts[:10]])
     await update.message.reply_text(text, parse_mode="Markdown")
 
-
 async def cmd_forget(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    clear_user(user_id)
-    await update.message.reply_text(
-        "Memory wiped. Profile deleted. Type /start to begin again."
-    )
-
+    clear_user(str(update.effective_user.id))
+    await update.message.reply_text("Memory wiped.")
 
 async def cmd_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if not args:
-        current = os.getenv("MODEL_NAME", "gemini-2.0-flash")
-        provider = os.getenv("MODEL_PROVIDER", "gemini")
-        await update.message.reply_text(
-            f"Current model: `{current}` (provider: `{provider}`)\n\n"
-            "To switch: `/model [model-name]`\n"
-            "Change provider in your `.env` file.",
-            parse_mode="Markdown"
-        )
-        return
-
-    new_model = args[0]
-    os.environ["MODEL_NAME"] = new_model
-    await update.message.reply_text(f"Model switched to `{new_model}` for this session.\nTo make permanent, update MODEL_NAME in .env", parse_mode="Markdown")
-
+    if context.args:
+        os.environ["MODEL_NAME"] = context.args[0]
+        await update.message.reply_text(f"Model: {context.args[0]}")
 
 def run_telegram():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not token:
-        raise ValueError("TELEGRAM_BOT_TOKEN not set in .env")
-
+    if not token: raise ValueError("TELEGRAM_BOT_TOKEN missing")
     app = Application.builder().token(token).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("memory", cmd_memory))
     app.add_handler(CommandHandler("forget", cmd_forget))
     app.add_handler(CommandHandler("model", cmd_model))
+    app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("FriendlyClaw Telegram bot is live 🟢")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("FriendlyClaw Telegram Live 🟢")
+    app.run_polling()

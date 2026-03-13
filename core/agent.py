@@ -2,10 +2,16 @@ import os
 import json
 import base64
 import logging
+import asyncio
 from pathlib import Path
-from memory.memory import get_profile, get_history, get_memories, get_facts, add_message, save_memory, add_fact
-from skills.skills import get_openclaw_skills
+from memory.memory import (
+    get_profile, get_history, get_memories, get_facts, 
+    add_message, save_memory, add_fact, save_memory_vector, search_memories,
+    save_pending_action
+)
+from skills.skills import get_openclaw_skills, get_all_skills
 import google.generativeai as genai
+from google.generativeai import types
 from openai import OpenAI
 from tools.openclaw_bridge import send_command
 
@@ -20,6 +26,83 @@ logging.basicConfig(
 )
 logger = logging.getLogger("FriendlyClaw")
 
+# --- Dynamic Tool Definitions ---
+
+def get_tools_schema():
+    """Returns the tool definitions including dynamic custom skills."""
+    base_tools = [
+        {
+            "name": "run_shell",
+            "description": "Execute a shell command on the host system. High-impact commands require user confirmation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string", "description": "The shell command to execute."}
+                },
+                "required": ["command"]
+            }
+        },
+        {
+            "name": "type_text",
+            "description": "Type text on the host keyboard.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "The text to type."}
+                },
+                "required": ["text"]
+            }
+        },
+        {
+            "name": "click_target",
+            "description": "Click a target on the screen (coordinate or element name).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "target": {"type": "string", "description": "The target to click."}
+                },
+                "required": ["target"]
+            }
+        },
+        {
+            "name": "take_screenshot",
+            "description": "Capture a screenshot of the current screen.",
+            "parameters": {"type": "object", "properties": {}}
+        },
+        {
+            "name": "remember_info",
+            "description": "Save important information to your long-term persistent memory for future context.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string", "description": "A short identifier for the memory."},
+                    "value": {"type": "string", "description": "The detailed information to remember."}
+                },
+                "required": ["key", "value"]
+            }
+        }
+    ]
+    
+    # Add Custom Skills as tools
+    all_skills = get_all_skills()
+    for name, skill in all_skills.items():
+        if not skill.get("system"):
+            base_tools.append({
+                "name": f"skill_{name}",
+                "description": skill.get("description", "Custom operational module"),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {"type": "string", "description": "Data to analyze/process with this skill."}
+                    },
+                    "required": ["input"]
+                }
+            })
+            
+    return base_tools
+
+# --- Model & Embedding Helpers ---
+
 def get_model_client():
     provider = os.getenv("MODEL_PROVIDER", "gemini").lower()
     model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
@@ -30,38 +113,42 @@ def get_model_client():
             if not api_key:
                 raise ValueError("GEMINI_API_KEY not found in environment")
             genai.configure(api_key=api_key)
-            return "gemini", genai.GenerativeModel(model_name)
-        
-        elif provider == "openai":
-            api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY not found in environment")
-            return "openai", OpenAI(api_key=api_key)
-        
-        elif provider == "openrouter":
-            api_key = os.getenv("OPENROUTER_API_KEY")
-            if not api_key:
-                raise ValueError("OPENROUTER_API_KEY not found in environment")
-            return "openai", OpenAI(
-                api_key=api_key,
-                base_url="https://openrouter.ai/api/v1"
+            return "gemini", genai.GenerativeModel(
+                model_name=model_name,
+                tools=get_tools_schema()
             )
         
-        elif provider == "custom":
-            return "openai", OpenAI(
-                api_key=os.getenv("CUSTOM_API_KEY", "fake"),
-                base_url=os.getenv("CUSTOM_BASE_URL", "http://localhost:8317")
-            )
+        elif provider in ["openai", "openrouter", "custom"]:
+            api_key = os.getenv(f"{provider.upper()}_API_KEY") or os.getenv("CUSTOM_API_KEY")
+            base_url = None
+            if provider == "openrouter":
+                base_url = "https://openrouter.ai/api/v1"
+            elif provider == "custom":
+                base_url = os.getenv("CUSTOM_BASE_URL", "http://localhost:8317")
+            
+            return "openai", OpenAI(api_key=api_key, base_url=base_url)
         else:
             raise ValueError(f"Unknown MODEL_PROVIDER: {provider}")
     except Exception as e:
         logger.error(f"Error initializing model client: {e}")
         raise
 
+async def get_embedding(text: str) -> list:
+    """Generates a 768-dim embedding using Gemini. Forced to 768 for sqlite-vec compatibility."""
+    try:
+        # Default to Gemini text-embedding-004 (768 dims)
+        result = genai.embed_content(
+            model="models/text-embedding-004",
+            content=text,
+            task_type="retrieval_document"
+        )
+        return result['embedding']
+    except Exception as e:
+        logger.warning(f"Embedding failed (ensure GEMINI_API_KEY is set): {e}")
+        return [0.0] * 768
 
-def build_system_prompt(user_id: str) -> str:
+def build_system_prompt(user_id: str, relevant_memories: list = None) -> str:
     profile = get_profile(user_id)
-    memories = get_memories(user_id)
     facts = get_facts(user_id)
 
     agent_name = profile.get("agent_name", "Buddy")
@@ -73,178 +160,158 @@ def build_system_prompt(user_id: str) -> str:
     visual_context = profile.get("visual_context", "")
 
     memory_block = ""
-    if memories:
-        memory_block = "\n\nThings you've remembered about this person:\n"
-        for m in memories[-15:]:
+    if relevant_memories:
+        memory_block = "\n\nRelevant Historical Context (Semantic Search):\n"
+        for m in relevant_memories:
             memory_block += f"- [{m['key']}]: {m['value']}\n"
 
     facts_block = ""
     if facts:
-        facts_block = "\n\nKnown facts about this person:\n"
-        for f in facts[-20:]:
+        facts_block = "\n\nKnown Static Facts:\n"
+        for f in facts[-10:]:
             facts_block += f"- {f}\n"
 
-    visual_block = ""
-    if visual_context:
-        visual_block = f"\n\nVisual reference for operational identity:\n{visual_context}"
-
+    visual_block = f"\n\nVisual reference for operational identity:\n{visual_context}" if visual_context else ""
     openclaw_skills = ", ".join(get_openclaw_skills())
 
-    return f"""You are {agent_name} — an Autonomous Strategic Partner and System Operator.
-
-Operational Persona: {agent_personality}
-Communication Protocol: {agent_tone}
-Interaction Strategy: {agent_style}
-
-Primary User: {user_name}.
-{f"Contextual Directives: {user_context}" if user_context else ""}
+    return f"""You are {agent_name} — an Autonomous Strategic Partner.
+Primary User: {user_name}. Persona: {agent_personality}.
 {visual_block}
 
-Core Directives:
-- Operate as a high-agency Strategic Partner. Your role is not just to assist, but to collaborate on your user's objectives with extreme loyalty.
-- You have an "Eternal Memory." Reference past conversations and facts about {user_name} to provide deeply personalized and contextual responses.
-- Be direct, objective, and technically precise. Act as a high-fidelity digital operative—you know their systems and their history inside and out.
-
-*** SYSTEM EXECUTION GATEWAY (OpenClaw) ***
-You are interfaced with the host system via the OpenClaw protocol.
-When a task requires system-level execution (e.g., shell commands, UI interaction, media processing), you MUST invoke the relevant tool.
-Tool invocations must be provided EXCLUSIVELY as a JSON block:
-```json
-{{
-  "tool": "openclaw",
-  "action": "<action_name>",
-  "parameters": {{ "<key>": "<value>" }}
-}}
-```
-
-Available Native Skills: {openclaw_skills}
-Execution Vectors:
-- "run_shell" (parameters: {{"command": "..."}})
-- "type" (parameters: {{"text": "..."}})
-- "click" (parameters: {{"target": "..."}})
-- "screenshot" (parameters: {{}})
-
-OPERATIONAL SECURITY:
-- PROHIBITED: Destructive commands (e.g., `rm -rf`, disk formatting, unauthorized data deletion).
-- MANDATORY: Request explicit user confirmation for high-impact system state changes.
-- PROTECT: Never expose secrets, tokens, or private credentials in cleartext.
-
-Do not provide conversational text when invoking a system tool.
+CORE DIRECTIVES:
+- High-agency Partner. Use tools natively.
+- Semantic Memory active. Reference retrieved history.
+- Available OpenClaw Body Skills: {openclaw_skills}.
 
 {memory_block}
 {facts_block}
 """
 
+# --- Tool Execution Logic ---
 
-def extract_facts_from_message(user_id: str, message: str, response: str):
-    """Simple fact extraction - looks for personal details to remember"""
-    triggers = [
-        ("my name is", "name"),
-        ("i live in", "location"),
-        ("i work at", "workplace"),
-        ("i'm studying", "education"),
-        ("i have a", "possession"),
-        ("my girlfriend", "relationship"),
-        ("my boyfriend", "relationship"),
-        ("i hate", "dislike"),
-        ("i love", "like"),
-        ("i'm scared", "fear"),
-    ]
-    lower = message.lower()
-    for trigger, key in triggers:
-        if trigger in lower:
-            idx = lower.index(trigger)
-            snippet = message[idx:idx+80].strip()
-            add_fact(user_id, snippet)
-            logger.info(f"Fact extracted for user {user_id}: {snippet}")
-            break
+async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: str):
+    """Executes tools and handles confirmation / skill logic."""
+    
+    if name == "remember_info":
+        key, value = args.get("key"), args.get("value")
+        mem_id = save_memory(user_id, key, value)
+        emb = await get_embedding(f"{key}: {value}")
+        save_memory_vector(user_id, mem_id, emb)
+        return {"status": "success", "message": f"Remembered: {key}"}
 
+    if name.startswith("skill_"):
+        skill_name = name[6:]
+        all_skills = get_all_skills()
+        skill = all_skills.get(skill_name)
+        if skill:
+            # We treat the custom skill prompt as a sub-directive
+            return {"status": "success", "directive": skill["prompt"], "input": args.get("input")}
 
-async def execute_model_call(provider, client, model_name, system_prompt, history, message, image_bytes):
-    if provider == "gemini":
-        parts = []
-        if image_bytes:
-            parts.append({"mime_type": "image/jpeg", "data": image_bytes})
-        parts.append(message)
+    # System Actions
+    action_map = {
+        "run_shell": "run_shell",
+        "type_text": "type",
+        "click_target": "click",
+        "take_screenshot": "screenshot"
+    }
+    action = action_map.get(name)
+    if not action: return {"status": "error", "message": f"Unknown tool: {name}"}
 
-        if history:
-            gemini_history = []
-            for msg in history:
-                role = "user" if msg["role"] == "user" else "model"
-                gemini_history.append({"role": role, "parts": [msg["content"]]})
-            chat_session = client.start_chat(history=gemini_history)
-            full_msg = f"{system_prompt}\n\n{message}" if not gemini_history else message
-            response = chat_session.send_message(parts if image_bytes else full_msg)
-        else:
-            response = client.generate_content([system_prompt] + parts)
-        return response.text
+    # Security Intercept
+    if action == "run_shell":
+        action_id = f"act_{int(asyncio.get_event_loop().time())}"
+        action_data = {"action": action, "parameters": args}
+        save_pending_action(action_id, user_id, action_data, original_msg)
+        return {
+            "status": "pending_confirmation",
+            "action_id": action_id,
+            "display": f"Execute: `{args.get('command')}`?"
+        }
 
-    else:  # openai-compatible
-        messages = [{"role": "system", "content": system_prompt}]
-        for msg in history:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+    return await send_command(action, args)
 
-        if image_bytes:
-            b64 = base64.b64encode(image_bytes).decode()
-            messages.append({
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": message},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
-                ]
-            })
-        else:
-            messages.append({"role": "user", "content": message})
+# --- Main Chat Logic (Recursive) ---
 
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=messages
-        )
-        return response.choices[0].message.content
-
-
-async def chat(user_id: str, message: str, image_bytes: bytes = None) -> str:
+async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_action: dict = None) -> dict:
     profile = get_profile(user_id)
-    if not profile:
-        return "You haven't set up your profile yet. Send /start to begin."
+    if not profile: return {"reply": "Run /start first."}
 
-    system_prompt = build_system_prompt(user_id)
-    history = get_history(user_id, limit=20)
+    query_emb = await get_embedding(message)
+    relevant = search_memories(user_id, query_emb, limit=5)
+    system_prompt = build_system_prompt(user_id, relevant)
+    
+    provider, client = get_model_client()
+    model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+
+    if confirmed_action:
+        result = await send_command(confirmed_action["action"], confirmed_action["parameters"])
+        message = f"User confirmed action. System result: {json.dumps(result)}"
 
     try:
-        provider, client = get_model_client()
-        model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+        if provider == "gemini":
+            chat_session = client.start_chat(history=[])
+            # Initial content
+            current_msg = f"{system_prompt}\n\nUser: {message}"
+            
+            # Loop for multiple tool calls
+            for _ in range(5): # Max 5 recursive calls to prevent loops
+                response = chat_session.send_message(current_msg)
+                
+                # Check for Tool Call
+                parts = response.candidates[0].content.parts
+                fc = next((p.function_call for p in parts if p.function_call), None)
+                
+                if not fc:
+                    reply = response.text
+                    break # Final response reached
+                
+                # Execute tool
+                logger.info(f"Tool Call: {fc.name}({fc.args})")
+                res = await handle_tool_call(user_id, fc.name, dict(fc.args), message)
+                
+                if isinstance(res, dict) and res.get("status") == "pending_confirmation":
+                    return {"action_required": res}
+                
+                # Prepare tool response for next loop iteration
+                current_msg = types.Content(parts=[types.Part.from_function_response(
+                    name=fc.name,
+                    response=res
+                )])
+            else:
+                reply = "I've hit my recursive tool limit. What else can I do?"
 
-        reply = await execute_model_call(provider, client, model_name, system_prompt, history, message, image_bytes)
+        else: # OpenAI
+            messages = [{"role": "system", "content": system_prompt}]
+            # (History would go here)
+            messages.append({"role": "user", "content": message})
+            
+            tools = [{"type": "function", "function": t} for t in get_tools_schema()]
+            
+            for _ in range(5):
+                response = client.chat.completions.create(model=model_name, messages=messages, tools=tools)
+                msg = response.choices[0].message
+                
+                if not msg.tool_calls:
+                    reply = msg.content
+                    break
+                
+                messages.append(msg)
+                for tc in msg.tool_calls:
+                    args = json.loads(tc.function.arguments)
+                    res = await handle_tool_call(user_id, tc.function.name, args, message)
+                    
+                    if isinstance(res, dict) and res.get("status") == "pending_confirmation":
+                        return {"action_required": res}
+                    
+                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(res)})
+            else:
+                reply = "Recursive tool limit reached."
 
-        # Check for OpenClaw Tool Use
-        if "```json" in reply and '"tool": "openclaw"' in reply:
-            try:
-                # Extract JSON block
-                json_str = reply.split("```json")[1].split("```")[0].strip()
-                command = json.loads(json_str)
-                
-                action = command.get("action")
-                params = command.get("parameters", {})
-                
-                logger.info(f"Executing OpenClaw Action: {action} with {params}")
-                result = await send_command(action, params)
-                
-                # Send result back to model to get a natural language response
-                follow_up_msg = f"System returned: {json.dumps(result)}\nTell the user what happened."
-                reply = await execute_model_call(provider, client, model_name, system_prompt, history, follow_up_msg, None)
-                
-            except Exception as e:
-                logger.error(f"Failed to parse or execute OpenClaw tool: {e}")
-                reply = f"I tried to interact with your system, but something went wrong: {str(e)}"
-
-        # Save to memory
+        # Save History
         add_message(user_id, "user", message)
         add_message(user_id, "assistant", reply)
-        extract_facts_from_message(user_id, message, reply)
-
-        return reply
+        return {"reply": reply}
 
     except Exception as e:
-        logger.error(f"Chat error for user {user_id}: {e}")
-        return "I'm having trouble thinking right now. Check my logs or try again later."
+        logger.error(f"Chat error: {e}")
+        return {"reply": f"Thinking failed: {str(e)}"}

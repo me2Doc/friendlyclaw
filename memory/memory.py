@@ -1,5 +1,7 @@
 import sqlite3
 import json
+import sqlite_vec
+import numpy as np
 from datetime import datetime
 from pathlib import Path
 from contextlib import contextmanager
@@ -10,6 +12,9 @@ DB_PATH = Path("data/friendlyclaw.db")
 def get_db():
     DB_PATH.parent.mkdir(exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
+    conn.enable_load_extension(True)
+    sqlite_vec.load(conn)
+    conn.enable_load_extension(False)
     try:
         yield conn
     finally:
@@ -52,7 +57,73 @@ def init_db():
                 timestamp TEXT NOT NULL
             )
         """)
+        # Vector Table for RAG
+        c.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS vec_memories USING vec0(
+                id INTEGER PRIMARY KEY,
+                embedding FLOAT[768]
+            )
+        """)
+        # Persistent Pending Actions
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS pending_actions (
+                action_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                action_data TEXT NOT NULL,
+                original_message TEXT NOT NULL,
+                timestamp TEXT NOT NULL
+            )
+        """)
         conn.commit()
+
+def save_pending_action(action_id: str, user_id: str, action_data: dict, message: str):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO pending_actions (action_id, user_id, action_data, original_message, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        """, (action_id, user_id, json.dumps(action_data), message, datetime.now().isoformat()))
+        conn.commit()
+
+def get_pending_action(action_id: str):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("SELECT action_data, original_message FROM pending_actions WHERE action_id=?", (action_id,))
+        row = c.fetchone()
+        if row:
+            return {"action": json.loads(row[0]), "message": row[1]}
+        return None
+
+def delete_pending_action(action_id: str):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM pending_actions WHERE action_id=?", (action_id,))
+        conn.commit()
+
+def save_memory_vector(user_id: str, memory_id: int, embedding: list):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO vec_memories(id, embedding) VALUES (?, ?)",
+            (memory_id, sqlite_vec.serialize_float32(embedding))
+        )
+        conn.commit()
+
+def search_memories(user_id: str, query_embedding: list, limit: int = 5):
+    with get_db() as conn:
+        c = conn.cursor()
+        # Join with memories table to get the actual text
+        c.execute("""
+            SELECT m.key, m.value, v.distance
+            FROM vec_memories v
+            JOIN memories m ON v.id = m.id
+            WHERE m.user_id = ?
+              AND v.embedding MATCH ?
+              AND k = ?
+            ORDER BY v.distance
+        """, (user_id, sqlite_vec.serialize_float32(query_embedding), limit))
+        rows = c.fetchall()
+        return [{"key": r[0], "value": r[1], "score": r[2]} for r in rows]
 
 def save_profile(user_id: str, profile: dict):
     with get_db() as conn:
@@ -100,6 +171,7 @@ def save_memory(user_id: str, key: str, value: str):
             VALUES (?, ?, ?, ?)
         """, (user_id, key, value, datetime.now().isoformat()))
         conn.commit()
+        return c.lastrowid
 
 def get_memories(user_id: str, limit: int = 20) -> list:
     with get_db() as conn:

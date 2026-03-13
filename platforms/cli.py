@@ -4,11 +4,13 @@ from core.agent import chat
 from core.onboarding import (
     get_onboarding_state, process_onboarding_answer, get_welcome_message
 )
-from memory.memory import init_db, get_profile, clear_user
+from memory.memory import (
+    init_db, get_profile, clear_user, 
+    get_pending_action, delete_pending_action
+)
 from skills.skills import get_skill_prompt, get_help_text, get_all_skills
 
 USER_ID = "cli_user"
-
 
 async def cli_chat():
     init_db()
@@ -91,9 +93,32 @@ async def cli_chat():
 
         message = f"[SKILL: {skill_prompt}]\n\n{clean_text}" if skill_prompt else user_input
 
-        print(f"\n{agent_name}: ", end="", flush=True)
-        reply = await chat(USER_ID, message)
-        print(reply + "\n")
+        # Chat and handle results (including recursive tool confirmation)
+        result = await chat(USER_ID, message)
+        
+        while "action_required" in result:
+            action_req = result["action_required"]
+            action_id = action_req["action_id"]
+            
+            pending = get_pending_action(action_id)
+            if not pending:
+                print(f"\n{agent_name}: Action expired.")
+                break
+
+            print(f"\n{agent_name}: [SECURITY] {action_req['display']}")
+            confirm = input("Confirm? (y/n): ").strip().lower()
+            
+            if confirm == 'y':
+                result = await chat(USER_ID, pending["message"], confirmed_action=pending["action"])
+                delete_pending_action(action_id)
+            else:
+                delete_pending_action(action_id)
+                print(f"{agent_name}: Action cancelled.")
+                result = {"reply": "I cancelled the action as requested."}
+                break
+
+        reply = result.get("reply", "No response.")
+        print(f"\n{agent_name}: {reply}\n")
 
 
 def run_cli():
