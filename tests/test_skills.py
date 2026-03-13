@@ -18,7 +18,7 @@ def test_core_skills_loading():
 
 def test_custom_skill_loading():
     # Create a temporary custom skill
-    custom_dir = Path("skills/custom")
+    custom_dir = Path("brain/skills/custom")
     custom_dir.mkdir(exist_ok=True)
     test_skill_path = custom_dir / "test_joke.json"
     

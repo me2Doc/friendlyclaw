@@ -20,17 +20,17 @@ FriendlyClaw is a **High-Agency AI Operator**. We prioritize:
 ### 3. Making Changes
 1. **Fork the Repo:** Create your own copy of the project.
 2. **Create a Branch:** Work on a specific feature (e.g., `git checkout -b feat/new-skill`).
-3. **Commit Your Changes:** Use clear, descriptive commit messages (e.g., `git commit -m "Added Spotify playback skill to system_body"`).
+3. **Commit Your Changes:** Use clear, descriptive commit messages (e.g., `git commit -m "Added Spotify playback skill to body"`).
 4. **Push & PR:** Push to your fork and submit a **Pull Request (PR)** to our `main` branch.
 
 ## 📂 Coding Standards
-- **The Brain:** Written in **Python 3**. Focus on persistent memory and strategic logic.
-- **The Body:** Powered by **OpenClaw (Node.js)**. Focus on system hooks and execution.
-- **Security:** Never commit secrets or API keys. Ensure all new system commands pass through the `COMMAND_BLACKLIST` in `openclaw_bridge.py`.
+- **The Brain:** Written in **Python 3**. Core logic resides in `brain/`.
+- **The Body:** Powered by **OpenClaw (Node.js)**. Source code in `body/`.
+- **Security:** Never commit secrets or API keys. Ensure all new system commands pass through the security intercepts in `brain/core/agent.py`.
 
 ## 🦾 Skill Development
-- **Native Skills:** Add to `system_body/skills/` using the OpenClaw Markdown format.
-- **Logic Skills:** Add to `skills/custom/` using the FriendlyClaw JSON format.
+- **Native Skills:** Add to `body/skills/` using the OpenClaw Markdown format.
+- **Logic Skills:** Add to `brain/skills/custom/` using the FriendlyClaw JSON format.
 
 ---
 *By contributing, you agree that your contributions will be licensed under the project's MIT License.*

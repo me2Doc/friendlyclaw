@@ -3,8 +3,8 @@ import logging
 import asyncio
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from memory.memory import update_task, add_message
-from core.prompts import SWARM_SUBAGENT_PROMPT
+from brain.memory.memory import update_task, add_message
+from brain.core.prompts import SWARM_SUBAGENT_PROMPT
 
 logger = logging.getLogger("FriendlyClaw.Swarm")
 
@@ -33,7 +33,7 @@ class SwarmManager:
 
     async def _async_worker(self, user_id: str, task_id: int, objective: str):
         """Asynchronous part of the worker."""
-        from core.agent import chat
+        from brain.core.agent import chat
         
         # SCOPED CONTEXT: Sub-agents use 'worker_{task_id}' to isolate their thinking
         worker_context_id = f"worker_{task_id}"
@@ -41,7 +41,7 @@ class SwarmManager:
         update_task(task_id, "running")
         
         try:
-            # Sub-agents use a specialized 'Mission' prompt from core.prompts
+            # Sub-agents use a specialized 'Mission' prompt from brain.core.prompts
             prompt = SWARM_SUBAGENT_PROMPT.format(objective=objective)
             
             # Sub-agent turn with isolated ID

@@ -1,14 +1,14 @@
 import asyncio
 import os
-from core.agent import chat
-from core.onboarding import (
+from brain.core.agent import chat
+from brain.core.onboarding import (
     get_onboarding_state, process_onboarding_answer, get_welcome_message
 )
-from memory.memory import (
+from brain.memory.memory import (
     init_db, get_profile, clear_user, 
     get_pending_action, delete_pending_action
 )
-from skills.skills import get_skill_prompt, get_help_text, get_all_skills
+from brain.skills.skills import get_skill_prompt, get_help_text, get_all_skills
 
 USER_ID = "cli_user"
 
@@ -70,7 +70,7 @@ async def cli_chat():
             continue
 
         if user_input == "/tasks":
-            from memory.memory import get_user_tasks
+            from brain.memory.memory import get_user_tasks
             tasks = get_user_tasks(USER_ID)
             print("\n--- Strategic Task Board ---")
             for t in tasks:
@@ -79,7 +79,7 @@ async def cli_chat():
             continue
 
         if user_input.startswith("/synthesize"):
-            from memory.memory import get_task
+            from brain.memory.memory import get_task
             parts = user_input.split()
             if len(parts) < 2:
                 print("Usage: /synthesize [task_id]")

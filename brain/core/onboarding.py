@@ -1,5 +1,5 @@
 import os
-from memory.memory import save_profile, get_profile, init_db
+from brain.memory.memory import save_profile, get_profile, init_db
 
 QUESTIONS = [
     {

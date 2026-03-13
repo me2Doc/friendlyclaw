@@ -4,20 +4,20 @@ import base64
 import logging
 import asyncio
 from pathlib import Path
-from memory.memory import (
+from brain.memory.memory import (
     get_profile, get_history, get_memories, get_facts, 
     add_message, save_memory, add_fact, save_memory_vector, search_memories,
     save_pending_action, add_task, update_task, get_user_tasks, get_task, add_audit_log
 )
-from skills.skills import get_openclaw_skills, get_all_skills
+from brain.skills.skills import get_openclaw_skills, get_all_skills
 import google.generativeai as genai
 from google.generativeai import types
 from openai import OpenAI
-from tools.openclaw_bridge import send_command
-from tools.web_intelligence import deep_read_url
-from core.scheduler import schedule_mission, list_missions
-from core.swarm import swarm
-from core.prompts import MODE_DIRECTIVE_SENTINEL
+from brain.tools.openclaw_bridge import send_command
+from brain.tools.web_intelligence import deep_read_url
+from brain.core.scheduler import schedule_mission, list_missions
+from brain.core.swarm import swarm
+from brain.core.prompts import MODE_DIRECTIVE_SENTINEL
 
 # Configure logging
 logging.basicConfig(

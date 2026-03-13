@@ -5,7 +5,7 @@ import asyncio
 from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlite import SQLAlchemyJobStore
-from memory.memory import DB_PATH
+from brain.memory.memory import DB_PATH
 
 logger = logging.getLogger("FriendlyClaw.Scheduler")
 
@@ -23,7 +23,7 @@ def get_scheduler():
 
 async def run_mission(user_id: str, prompt: str):
     """Executes a scheduled mission (AI prompt)."""
-    from core.agent import chat
+    from brain.core.agent import chat
     logger.info(f"Executing scheduled mission for {user_id}: {prompt[:50]}...")
     
     try:

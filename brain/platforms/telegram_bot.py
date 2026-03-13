@@ -6,17 +6,17 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, filters, ContextTypes
 )
-from core.agent import chat
-from core.onboarding import (
+from brain.core.agent import chat
+from brain.core.onboarding import (
     get_onboarding_state, get_current_question,
     process_onboarding_answer, get_welcome_message
 )
-from memory.memory import (
+from brain.memory.memory import (
     init_db, get_memories, get_facts,
     clear_user, save_profile, get_profile,
     get_pending_action, delete_pending_action
 )
-from skills.skills import get_skill_prompt, get_help_text, get_all_skills
+from brain.skills.skills import get_skill_prompt, get_help_text, get_all_skills
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -137,7 +137,7 @@ async def cmd_forget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Memory wiped.")
 
 async def cmd_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from memory.memory import get_user_tasks
+    from brain.memory.memory import get_user_tasks
     user_id = str(update.effective_user.id)
     tasks = get_user_tasks(user_id)
     if not tasks:
@@ -150,7 +150,7 @@ async def cmd_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="Markdown")
 
 async def cmd_synthesize(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from memory.memory import get_task
+    from brain.memory.memory import get_task
     if not context.args:
         await update.message.reply_text("Usage: `/synthesize [task_id]`")
         return

@@ -5,11 +5,11 @@ import asyncio
 import threading
 import time
 from dotenv import load_dotenv
-from memory.memory import init_db
-from tools.openclaw_bridge import check_gateway_health
-from tools.config_sync import sync_openclaw_config
-from core.scheduler import start_scheduler
-from core.heartbeat import heartbeat_loop
+from brain.memory.memory import init_db
+from brain.tools.openclaw_bridge import check_gateway_health
+from brain.tools.config_sync import sync_openclaw_config
+from brain.core.scheduler import start_scheduler
+from brain.core.heartbeat import heartbeat_loop
 
 load_dotenv()
 init_db()
@@ -21,12 +21,12 @@ def start_openclaw_gateway():
     """Starts the OpenClaw gateway in the background if it's not already running."""
     global gateway_process
     
-    # Ensure system_body config is synced with .env first
+    # Ensure body config is synced with .env first
     sync_openclaw_config()
     
-    gateway_script = os.path.join(os.getcwd(), "system_body", "openclaw.mjs")
+    gateway_script = os.path.join(os.getcwd(), "body", "openclaw.mjs")
     if not os.path.exists(gateway_script):
-        print("Warning: OpenClaw gateway script (system_body/openclaw.mjs) not found.")
+        print("Warning: OpenClaw gateway script (body/openclaw.mjs) not found.")
         return None
 
     print("🚀 Starting OpenClaw Gateway (System Body)...")
@@ -34,7 +34,7 @@ def start_openclaw_gateway():
         # Start gateway in background
         gateway_process = subprocess.Popen(
             ["node", gateway_script, "gateway"],
-            cwd=os.path.join(os.getcwd(), "system_body"),
+            cwd=os.path.join(os.getcwd(), "body"),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
@@ -96,10 +96,10 @@ def main():
         if "--telegram" in sys.argv or platform == "telegram":
             print("🤖 Starting Telegram platform...")
             print("💡 Reminder: Find your bot in Telegram and send /start to begin.")
-            from platforms.telegram_bot import run_telegram
+            from brain.platforms.telegram_bot import run_telegram
             run_telegram()
         elif "--cli" in sys.argv or platform == "cli":
-            from platforms.cli import run_cli
+            from brain.platforms.cli import run_cli
             run_cli()
         else:
             print("FriendlyClaw")

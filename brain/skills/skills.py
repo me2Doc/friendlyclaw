@@ -29,7 +29,7 @@ CORE_SKILLS = {
     "help": {"trigger": "/help", "description": "Display system documentation and capabilities", "system": True}
 }
 
-CUSTOM_SKILLS_DIR = Path("skills/custom")
+CUSTOM_SKILLS_DIR = Path("brain/skills/custom")
 
 def load_custom_skills() -> dict:
     """Loads all .json skill files from the custom skills directory"""
@@ -66,8 +66,8 @@ def get_skill_prompt(trigger: str) -> str:
     return None
 
 def get_openclaw_skills() -> list:
-    """Reads the system_body/skills directory to find available OpenClaw system skills"""
-    skills_dir = Path("system_body/skills")
+    """Reads the body/skills directory to find available OpenClaw system skills"""
+    skills_dir = Path("body/skills")
     if not skills_dir.exists() or not skills_dir.is_dir():
         return []
     

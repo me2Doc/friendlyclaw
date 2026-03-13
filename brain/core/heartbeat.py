@@ -3,7 +3,7 @@ import time
 import logging
 import asyncio
 from pathlib import Path
-from core.prompts import HEARTBEAT_SENTINEL_PROMPT
+from brain.core.prompts import HEARTBEAT_SENTINEL_PROMPT
 
 logger = logging.getLogger("FriendlyClaw.Heartbeat")
 
@@ -12,7 +12,7 @@ USER_ID = "cli_user" # Default user for background heartbeats
 
 async def trigger_heartbeat():
     """Reads HEARTBEAT.md and triggers a proactive AI turn."""
-    from core.agent import chat
+    from brain.core.agent import chat
     
     if not HEARTBEAT_FILE.exists():
         return
@@ -23,7 +23,7 @@ async def trigger_heartbeat():
             
         logger.info("💓 Triggering Heartbeat Mission...")
         
-        # We use a specialized prompt from core.prompts
+        # We use a specialized prompt from brain.core.prompts
         prompt = HEARTBEAT_SENTINEL_PROMPT.format(missions=missions)
         
         result = await chat(USER_ID, prompt)

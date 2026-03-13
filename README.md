@@ -55,13 +55,12 @@ Explore the depths of the Hive Mind:
 
 ## 🧩 Structure at a Glance
 
-The project is organized for modularity and technical transparency:
+The project is organized into two primary domains:
 
-- `core/`: The reasoning engine, swarm management, and proactive loops.
-- `memory/`: SQLite-Vec persistent storage and RAG logic.
-- `platforms/`: Interaction layers for Telegram and CLI.
-- `system_body/`: The OpenClaw execution gateway (Node.js).
-- `tools/`: Professional integrations (Scrapling, Web Intelligence).
+- **`brain/`**: The Intelligence Layer (Python). Contains reasoning (`core`), persistent memory (`memory`), interaction layers (`platforms`), and research tools (`tools`).
+- **`body/`**: The Execution Layer (Node.js). Renamed from `system_body`, this is the gateway to the host OS.
+- **`docs/`**: Professional documentation and architectural deep-dives.
+- **`data/`**: (Generated) Secure local storage for the SQLite brain and audit logs.
 
 ---
 

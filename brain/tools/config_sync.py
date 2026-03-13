@@ -7,15 +7,15 @@ logger = logging.getLogger("FriendlyClaw.ConfigSync")
 
 def sync_openclaw_config():
     """
-    Synchronizes settings from FriendlyClaw .env to the internal OpenClaw system_body.
+    Synchronizes settings from FriendlyClaw .env to the internal OpenClaw body.
     Ensures the unified system has a single source of truth.
     """
     # Paths
-    oc_config_path = Path("system_body/openclaw.json")
+    oc_config_path = Path("body/openclaw.json")
     
     # If the config doesn't exist, we create a base one
     if not oc_config_path.exists():
-        logger.info("Initializing system_body/openclaw.json...")
+        logger.info("Initializing body/openclaw.json...")
         base_config = {
             "gateway": {"port": 18789, "mode": "local", "bind": "loopback"},
             "channels": {"telegram": {"enabled": False}, "whatsapp": {"enabled": False}},

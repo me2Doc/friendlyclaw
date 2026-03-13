@@ -17,11 +17,11 @@ WORKDIR /app
 # Install pnpm for OpenClaw dependencies
 RUN npm install -g pnpm@10.23.0
 
-# Copy system_body first to cache Node dependency installation
-COPY system_body/package.json ./system_body/
+# Copy body first to cache Node dependency installation
+COPY body/package.json ./body/
 # If there's a lockfile, copy it too. We use a wildcard to avoid failing if it doesn't exist.
-COPY system_body/pnpm-lock.yaml* ./system_body/
-RUN cd system_body && pnpm install
+COPY body/pnpm-lock.yaml* ./body/
+RUN cd body && pnpm install
 
 # Copy Python requirements and install
 COPY requirements.txt .
