@@ -34,6 +34,11 @@ def get_tools_schema():
     """Returns the tool definitions including dynamic custom skills."""
     base_tools = [
         {
+            "name": "visual_pulse",
+            "description": "Perform a visual audit of the current environment. Tries camera snapshot first, then falls back to desktop screenshot.",
+            "parameters": {"type": "object", "properties": {}}
+        },
+        {
             "name": "schedule_mission",
             "description": "Schedule a proactive mission (AI prompt) to run at a specific time using a cron expression. Use this for system monitoring, daily briefings, or periodic tasks.",
             "parameters": {
@@ -188,16 +193,13 @@ async def get_embedding(text: str) -> list:
         logger.warning(f"Embedding failed (ensure GEMINI_API_KEY is set): {e}")
         return [0.0] * 768
 
-def build_system_prompt(user_id: str, relevant_memories: list = None) -> str:
+def build_system_prompt(user_id: str, relevant_memories: list = None, is_heartbeat: bool = False) -> str:
     profile = get_profile(user_id)
     facts = get_facts(user_id)
 
     agent_name = profile.get("agent_name", "Buddy")
     agent_personality = profile.get("agent_personality", "direct, loyal, honest")
-    agent_tone = profile.get("agent_tone", "casual")
-    agent_style = profile.get("agent_style", "conversational")
     user_name = profile.get("user_name", "friend")
-    user_context = profile.get("user_context", "")
     visual_context = profile.get("visual_context", "")
 
     memory_block = ""
@@ -215,14 +217,19 @@ def build_system_prompt(user_id: str, relevant_memories: list = None) -> str:
     visual_block = f"\n\nVisual reference for operational identity:\n{visual_context}" if visual_context else ""
     openclaw_skills = ", ".join(get_openclaw_skills())
 
+    mode_directive = ""
+    if is_heartbeat:
+        mode_directive = "\n🚨 AUTONOMOUS SENTINEL MODE ACTIVE: You are running a background heartbeat check. Be concise. Only alert if something is wrong or a mission objective is met."
+
     return f"""You are {agent_name} — an Autonomous Strategic Partner.
-Primary User: {user_name}. Persona: {agent_personality}.
+Primary User: {user_name}. Persona: {agent_personality}.{mode_directive}
 {visual_block}
 
 CORE DIRECTIVES:
 - High-agency Partner. Use tools natively.
 - Semantic Memory active. Reference retrieved history.
 - Available OpenClaw Body Skills: {openclaw_skills}.
+- For visual observation, use the 'visual_pulse' tool.
 
 {memory_block}
 {facts_block}
@@ -233,6 +240,19 @@ CORE DIRECTIVES:
 async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: str):
     """Executes tools and handles confirmation / skill logic."""
     
+    if name == "visual_pulse":
+        # Strategy: Try camera first, then fallback to screenshot
+        try:
+            logger.info("Visual Pulse: Attempting camera snapshot...")
+            cam_res = await send_command("camsnap", {"action": "snap", "parameters": {"out": "data/pulse.jpg"}})
+            if cam_res.get("status") == "success":
+                return {"status": "success", "observation": "Camera snapshot captured.", "file": "data/pulse.jpg"}
+        except:
+            pass
+            
+        logger.info("Visual Pulse: Falling back to screenshot...")
+        return await send_command("screenshot", {})
+
     if name == "schedule_mission":
         cron, prompt = args.get("cron"), args.get("mission_prompt")
         return schedule_mission(user_id, cron, prompt)
@@ -256,7 +276,6 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
         all_skills = get_all_skills()
         skill = all_skills.get(skill_name)
         if skill:
-            # We treat the custom skill prompt as a sub-directive
             return {"status": "success", "directive": skill["prompt"], "input": args.get("input")}
 
     # System Actions
@@ -288,9 +307,10 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_
     profile = get_profile(user_id)
     if not profile: return {"reply": "Run /start first."}
 
+    is_heartbeat = "[HEARTBEAT MISSION]" in message
     query_emb = await get_embedding(message)
     relevant = search_memories(user_id, query_emb, limit=5)
-    system_prompt = build_system_prompt(user_id, relevant)
+    system_prompt = build_system_prompt(user_id, relevant, is_heartbeat=is_heartbeat)
     
     provider, client = get_model_client()
     model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
@@ -302,64 +322,50 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_
     try:
         if provider == "gemini":
             chat_session = client.start_chat(history=[])
-            # Initial content
             current_msg = f"{system_prompt}\n\nUser: {message}"
             
-            # Loop for multiple tool calls
-            for _ in range(5): # Max 5 recursive calls to prevent loops
+            for _ in range(5): 
                 response = chat_session.send_message(current_msg)
-                
-                # Check for Tool Call
                 parts = response.candidates[0].content.parts
                 fc = next((p.function_call for p in parts if p.function_call), None)
                 
                 if not fc:
                     reply = response.text
-                    break # Final response reached
+                    break 
                 
-                # Execute tool
                 logger.info(f"Tool Call: {fc.name}({fc.args})")
                 res = await handle_tool_call(user_id, fc.name, dict(fc.args), message)
                 
                 if isinstance(res, dict) and res.get("status") == "pending_confirmation":
                     return {"action_required": res}
                 
-                # Prepare tool response for next loop iteration
                 current_msg = types.Content(parts=[types.Part.from_function_response(
                     name=fc.name,
                     response=res
                 )])
             else:
-                reply = "I've hit my recursive tool limit. What else can I do?"
+                reply = "Recursive tool limit reached."
 
         else: # OpenAI
-            messages = [{"role": "system", "content": system_prompt}]
-            # (History would go here)
-            messages.append({"role": "user", "content": message})
-            
+            messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": message}]
             tools = [{"type": "function", "function": t} for t in get_tools_schema()]
             
             for _ in range(5):
                 response = client.chat.completions.create(model=model_name, messages=messages, tools=tools)
                 msg = response.choices[0].message
-                
                 if not msg.tool_calls:
                     reply = msg.content
                     break
-                
                 messages.append(msg)
                 for tc in msg.tool_calls:
                     args = json.loads(tc.function.arguments)
                     res = await handle_tool_call(user_id, tc.function.name, args, message)
-                    
                     if isinstance(res, dict) and res.get("status") == "pending_confirmation":
                         return {"action_required": res}
-                    
                     messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(res)})
             else:
                 reply = "Recursive tool limit reached."
 
-        # Save History
         add_message(user_id, "user", message)
         add_message(user_id, "assistant", reply)
         return {"reply": reply}

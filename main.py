@@ -9,6 +9,7 @@ from memory.memory import init_db
 from tools.openclaw_bridge import check_gateway_health
 from tools.config_sync import sync_openclaw_config
 from core.scheduler import start_scheduler
+from core.heartbeat import heartbeat_loop
 
 load_dotenv()
 init_db()
@@ -83,6 +84,11 @@ def main():
     
     # Start the Strategic Scheduler
     start_scheduler()
+    
+    # Start the Heartbeat Monitor (Autonomous Tasks)
+    hb_interval = int(os.getenv("HEARTBEAT_INTERVAL", "15"))
+    hb_thread = threading.Thread(target=heartbeat_loop, args=(hb_interval,), daemon=True)
+    hb_thread.start()
     
     platform = os.getenv("PLATFORM", "cli").lower()
 
