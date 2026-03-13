@@ -10,7 +10,7 @@ FriendlyClaw is an **Autonomous AI Framework** designed for strategic collaborat
 
 ### 🛡️ Data Sovereignty. 🧠 Eternal Memory. 🦾 System-Level Agency.
 
-- **Persistent Partnership (The JARVIS Factor):** Unlike standard assistants, FriendlyClaw uses a local SQLite brain to remember every fact, preference, and historical context about you. It doesn't just chat; it evolves into a specialized partner that understands your unique workflow and objectives.
+- **Persistent Partnership (Cognitive Persistence):** Unlike standard assistants, FriendlyClaw uses a local SQLite brain to remember every fact, preference, and historical context about you. It doesn't just chat; it evolves into a specialized digital operative that understands your unique workflow and objectives.
 - **Unified System Body:** Ships with a built-in OpenClaw gateway, allowing your partner to physically operate your machine—executing shell commands, managing UI, and processing media.
 - **Total Privacy:** 100% self-hosted. Your memories and system access tokens never leave your infrastructure.
 - **High-Agency Execution:** Designed for users who need an AI that doesn't just suggest, but *acts* on their behalf with deep contextual awareness.
