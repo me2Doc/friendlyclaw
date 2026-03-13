@@ -1,0 +1,5 @@
+{
+    "trigger": "/bias",
+    "description": "Scan a decision for cognitive biases",
+    "prompt": "The user is about to make a decision or share an opinion. Analyze it for cognitive biases (Sunk Cost, Confirmation Bias, FOMO, etc.). Tell them where they are lying to themselves. Be direct and helpful, but don't sugarcoat the logic."
+}

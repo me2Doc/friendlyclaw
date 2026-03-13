@@ -1,0 +1,5 @@
+{
+    "trigger": "/pulse",
+    "description": "Analyze the 'vibe' and risk of a project or trend",
+    "prompt": "The user wants a 'pulse check' on a project, crypto coin, or trend. Based on what they describe, give a sentiment analysis: is it hype, fear, or a real move? Note the potential rug-pull risks or green flags. End with a confidence score (1-10)."
+}

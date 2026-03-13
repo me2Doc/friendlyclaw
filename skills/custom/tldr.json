@@ -1,0 +1,5 @@
+{
+    "trigger": "/tldr",
+    "description": "Ruthless summary of any text or link",
+    "prompt": "The user provided a long text, link, or thread. Your goal is a ruthless TL;DR. Give me: 1. The Core Point. 2. The Hidden Agenda (if any). 3. The Verdict (is it worth their time?). Be brief, sharp, and cynical."
+}
