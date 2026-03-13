@@ -12,10 +12,10 @@ CORE_SKILLS = {
         "description": "Analyze any conversation, situation, or text",
         "prompt": "The user wants you to analyze something. Break it down: what's actually happening, what the other person's intentions seem to be, what the user should know, and what they should do. Be direct. No fluff."
     },
-    "redflag": {
-        "trigger": "/redflag",
-        "description": "Check for red flags in a situation or conversation",
-        "prompt": "Scan what the user shares for red flags. Be specific — list exactly what concerned you and why. Also note green flags if there are any. Give a verdict at the end."
+    "audit": {
+        "trigger": "/audit",
+        "description": "Scan a situation or conversation for patterns, risks, or hidden intentions",
+        "prompt": "Analyze what the user shares for any underlying patterns, risks, or hidden intentions. Be specific — list your observations clearly and explain why they matter. Provide a balanced verdict on the situation."
     },
     "reply": {
         "trigger": "/reply",
@@ -81,10 +81,22 @@ def get_skill_prompt(trigger: str) -> str:
             return skill["prompt"]
     return None
 
+def get_openclaw_skills() -> list:
+    """Reads the system_body/skills directory to find available OpenClaw system skills"""
+    skills_dir = Path("system_body/skills")
+    if not skills_dir.exists() or not skills_dir.is_dir():
+        return []
+    
+    skills = []
+    for item in skills_dir.iterdir():
+        if item.is_dir() and (item / "SKILL.md").exists():
+            skills.append(item.name)
+    return sorted(skills)
+
 def get_help_text() -> str:
     """Generates help text based on all currently loaded skills"""
     all_skills = get_all_skills()
-    lines = ["*Available commands:*\n"]
+    lines = ["*Available Brain commands:*\n"]
     
     # Sort triggers alphabetically
     sorted_skills = sorted(all_skills.items(), key=lambda x: x[1]['trigger'])
@@ -92,5 +104,10 @@ def get_help_text() -> str:
     for skill_name, skill in sorted_skills:
         lines.append(f"`{skill['trigger']}` — {skill.get('description', 'No description')}")
     
+    oc_skills = get_openclaw_skills()
+    if oc_skills:
+        lines.append("\n*Available System Body Skills (Just ask to use them):*\n")
+        lines.append(", ".join([f"`{s}`" for s in oc_skills]))
+
     lines.append("\nOr just talk to me normally.")
     return "\n".join(lines)

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  friendlyclaw:
+    build: .
+    container_name: friendlyclaw
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env
+    ports:
+      - "18789:18789"
+    environment:
+      - PYTHONUNBUFFERED=1

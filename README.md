@@ -1,115 +1,92 @@
-# FriendlyClaw 🦅
+# FriendlyClaw 🦅 — Standalone AI Operator
 
 <p align="center">
   <img src="assets/mascot.png" width="300" alt="FriendlyClaw Mascot">
 </p>
 
 <p align="center">
-  <strong>Your self-hosted, persistent AI companion. Not an assistant. A partner.</strong>
+  <strong>The open-source AI companion with a system-level body. Powered by OpenClaw.</strong>
 </p>
 
 ---
 
-FriendlyClaw is more than a chatbot—it’s an **Elite Personal Brain** that lives on your infrastructure. It doesn’t just answer questions; it remembers your history, understands your personality, and provides strategic analysis of your life, conversations, and decisions.
+FriendlyClaw is an **Elite Personal Brain** that lives on your infrastructure. It combines long-term persistent memory and strategic analysis with the physical system-execution capabilities of the **OpenClaw** ecosystem.
 
-### 🛡️ Fully Owned. 🧠 Long-Term Memory. 🧬 Model Agnostic.
+### 🛡️ Fully Owned. 🧠 Long-Term Memory. 🦾 System-Level Execution.
 
-Most AIs are products you rent. **FriendlyClaw is a platform you own.** 
-
-- **Total Sovereignty:** Runs on your server, your laptop, or the cloud. No corporate monitoring.
-- **Eternal Memory:** Uses a local SQLite brain to remember every fact, event, and context you share.
-- **Adaptive Personality:** You define who it is—from a direct strategic advisor to a casual companion.
-- **Multimodal:** Send text, code, or screenshots. It sees what you see.
+- **Total Sovereignty:** Runs on your server, laptop, or cloud. You own the data.
+- **Eternal Memory:** Uses a local SQLite brain to remember facts across all sessions.
+- **Unified Body:** Ships with a built-in OpenClaw gateway to control your computer (Shell, UI, Media).
+- **Multimodal:** Process text, code, or screenshots. It sees and acts.
 
 ---
 
 ## ⚡ Quick Start
 
-Deploy your companion in under 60 seconds.
+Deploy your standalone operator in under 60 seconds.
 
+### Option 1: Docker (Recommended)
+The cleanest way to run the Brain (Python) and Body (Node.js) together.
+```bash
+git clone https://github.com/me2Doc/friendlyclaw
+cd friendlyclaw
+cp .env.example .env
+# Edit .env with your API keys
+docker compose up -d
+```
+
+### Option 2: Local Script
+Requires Node.js 22+ and Python 3.10+.
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
 cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
 
-The `friendlyclaw.sh` script is an automated elite installer that handles environment setup, dependencies, and initial personality configuration.
-
 ---
 
-## 🛠️ Core Capabilities
+## 🛠️ Integrated Capabilities
 
-| Skill | Description |
+| Layer | Features |
 | :--- | :--- |
-| **`/analyze`** | Deconstruct complex social situations, screenshots, or chat logs. |
-| **`/redflag`** | Scan interactions for manipulation, toxicity, or hidden patterns. |
-| **`/opener`** | Generate high-impact, personalized openers based on your style. |
-| **`/memory`** | Access what FriendlyClaw has learned about you across all sessions. |
-| **`/advice`** | Get direct, unfiltered strategic advice based on your history. |
+| **Brain (FriendlyClaw)** | `/analyze`, `/audit`, `/memory`, `/advice`, `/reply`, `/opener`. |
+| **Body (OpenClaw)** | `run_shell`, `type`, `click`, `screenshot`, and 50+ system skills. |
+| **Modular Skills** | Add any OpenClaw-compatible skill to `system_body/skills/`. |
 
-### 🧩 Add Custom Skills
-FriendlyClaw is designed for modularity. You can add new skills without touching the core code. Simply drop a `.json` file into `skills/custom/`.
-
-Example `skills/custom/joke.json`:
-```json
-{
-    "trigger": "/joke",
-    "description": "Tell a funny joke",
-    "prompt": "Tell a joke that is actually funny and matches the user's style."
-}
-```
-The bot will automatically detect the new command and add it to `/help`.
+### 🧩 System Control
+FriendlyClaw is physically connected to your system. When you ask it to perform an action (e.g., *"Open Chromium"* or *"Search for files"*), it uses its internal OpenClaw body to execute the command directly on your machine.
 
 ---
 
-## 🔌 Bring Your Own Brain
+## 🔌 Model Agnostic
 
-FriendlyClaw is model-agnostic. Use the best models on the market or run locally for 100% privacy.
-
+Use any model as the "Brain":
 - **Cloud:** Gemini 2.0/3.0, GPT-4o, Claude 3.5.
-- **Aggregators:** OpenRouter (access 100+ models).
+- **Aggregators:** OpenRouter.
 - **Local:** Ollama, LM Studio, or any OpenAI-compatible API.
 
 ---
 
-## 🚀 Deploy 24/7 (Railway / VPS)
+## 📂 Standalone Architecture
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
-
-1. Fork this repo.
-2. Connect to Railway.
-3. Add your `TELEGRAM_BOT_TOKEN` and `GEMINI_API_KEY`.
-4. Set `PLATFORM=telegram`.
-
----
-
-## 📂 Architecture
-
-FriendlyClaw is built for modularity and speed:
+FriendlyClaw is a unified system:
 
 ```
 friendlyclaw/
-├── main.py              # Single entry point
-├── core/                # Agent logic & personality engines
+├── main.py              # Unified entry point (Starts Brain + Body)
+├── core/                # Agent logic & personality engine
 ├── memory/              # SQLite persistent long-term memory
+├── system_body/         # Built-in OpenClaw execution engine (Gateway + 50+ Skills)
 ├── platforms/           # Telegram & CLI interfaces
-├── skills/              # Specialized analysis modules
-└── assets/              # Branding & media
+└── skills/              # Specialized analysis modules
 ```
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] **WhatsApp & Discord Integration**
-- [ ] **Voice-to-Voice (Whisper/TTS) support**
-- [ ] **Real-time Web Dashboard**
-- [ ] **Vision-based profile analysis**
+## 🚀 Public & Extensible
+Built for the **Claw Ecosystem**. Take it, fork it, and build your own operator.
 
 ---
 
 ## 📜 License
-
-MIT. Take it, fork it, make it yours.
-
-*Built for the Claw Ecosystem.*
+MIT.

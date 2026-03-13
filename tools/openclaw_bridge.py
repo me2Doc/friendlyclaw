@@ -8,6 +8,24 @@ logger = logging.getLogger("FriendlyClaw.OpenClaw")
 
 OPENCLAW_URL = os.getenv("OPENCLAW_WS_URL", "ws://127.0.0.1:18789")
 
+async def check_gateway_health(timeout=30) -> bool:
+    """
+    Polls the OpenClaw gateway until it responds or the timeout is reached.
+    """
+    logger.info(f"Checking OpenClaw Gateway health at {OPENCLAW_URL}...")
+    start_time = asyncio.get_event_loop().time()
+    
+    while True:
+        try:
+            async with websockets.connect(OPENCLAW_URL, ping_interval=None) as websocket:
+                logger.info("OpenClaw Gateway is online and ready.")
+                return True
+        except (ConnectionRefusedError, OSError):
+            if asyncio.get_event_loop().time() - start_time > timeout:
+                logger.error(f"Gateway failed to come online within {timeout} seconds.")
+                return False
+            await asyncio.sleep(1)
+
 async def send_command(action: str, parameters: dict = None) -> dict:
     """
     Sends a command to the OpenClaw Gateway via WebSocket.

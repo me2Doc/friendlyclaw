@@ -4,6 +4,7 @@ import base64
 import logging
 from pathlib import Path
 from memory.memory import get_profile, get_history, get_memories, get_facts, add_message, save_memory, add_fact
+from skills.skills import get_openclaw_skills
 import google.generativeai as genai
 from openai import OpenAI
 from tools.openclaw_bridge import send_command
@@ -87,6 +88,8 @@ def build_system_prompt(user_id: str) -> str:
     if visual_context:
         visual_block = f"\n\nVisual context the user shared about who they imagine you as:\n{visual_context}"
 
+    openclaw_skills = ", ".join(get_openclaw_skills())
+
     return f"""You are {agent_name} — a personal AI companion and Elite System Operator.
 
 Personality: {agent_personality}
@@ -113,11 +116,20 @@ To use the tool, your response MUST be ONLY a JSON block in this exact format:
   "parameters": {{ "<key>": "<value>" }}
 }}
 ```
+
+Available skills via OpenClaw body: {openclaw_skills}
+You can use `run_shell` to execute commands that trigger these skills.
+
 Common actions:
 - "run_shell" (parameters: {{"command": "..."}})
 - "type" (parameters: {{"text": "..."}})
 - "click" (parameters: {{"target": "..."}})
 - "screenshot" (parameters: {{}})
+
+SECURITY RAILS (MANDATORY):
+- NEVER execute destructive commands (e.g., `rm -rf`, formatting disks).
+- If a command alters system state significantly, confirm with the user first.
+- Do not expose sensitive tokens or credentials in your output.
 
 Never write text before or after the JSON block when using a tool.
 
