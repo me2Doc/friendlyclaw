@@ -2,7 +2,7 @@ import sqlite3
 import json
 import sqlite_vec
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from contextlib import contextmanager
 
@@ -166,6 +166,14 @@ def delete_pending_action(action_id: str):
         c.execute("DELETE FROM pending_actions WHERE action_id=?", (action_id,))
         conn.commit()
 
+def clear_old_pending_actions(days: int = 1):
+    """Maintenance: Clears unconfirmed actions older than X days."""
+    with get_db() as conn:
+        c = conn.cursor()
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        c.execute("DELETE FROM pending_actions WHERE timestamp < ?", (cutoff,))
+        conn.commit()
+
 def save_memory_vector(user_id: str, memory_id: int, embedding: list):
     with get_db() as conn:
         c = conn.cursor()
@@ -178,7 +186,8 @@ def save_memory_vector(user_id: str, memory_id: int, embedding: list):
 def search_memories(user_id: str, query_embedding: list, limit: int = 5):
     with get_db() as conn:
         c = conn.cursor()
-        # Join with memories table to get the actual text
+        # Join with memories table to get the actual text and scoped by user_id
+        # SQLITE-VEC Syntax Fix: uses MATCH and 'k = ?' parameter
         c.execute("""
             SELECT m.key, m.value, v.distance
             FROM vec_memories v
@@ -269,7 +278,12 @@ def get_facts(user_id: str) -> list:
 def clear_user(user_id: str):
     with get_db() as conn:
         c = conn.cursor()
-        for table in ["profile", "messages", "memories", "facts"]:
-            # Use a safe way to format table names even though these are hardcoded
+        # Clean up vector table first using subquery
+        c.execute("""
+            DELETE FROM vec_memories 
+            WHERE id IN (SELECT id FROM memories WHERE user_id=?)
+        """, (user_id,))
+        
+        for table in ["profile", "messages", "memories", "facts", "tasks"]:
             c.execute(f"DELETE FROM {table} WHERE user_id=?", (user_id,))
         conn.commit()

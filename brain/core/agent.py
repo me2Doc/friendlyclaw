@@ -34,19 +34,33 @@ logger = logging.getLogger("FriendlyClaw")
 
 def is_path_safe(command: str) -> bool:
     """
-    Checks if a command attempts to escape the WORKSPACE_ROOT.
-    This is a 'Sandbox Lite' implementation.
+    Absolute Path Sandbox: Verifies that any file manipulation in the command 
+    stays within the designated WORKSPACE_ROOT.
     """
     workspace_root = os.getenv("WORKSPACE_ROOT")
     if not workspace_root:
-        return True # If not set, we assume the user allows full access (Standard Mode)
+        return True # Standard mode (Full access)
 
-    root = Path(workspace_root).resolve()
-    # Simple check for common escape patterns
-    dangerous_patterns = ["../", "/etc", "/root", "/var/log", "/home/me2doc/.ssh"]
+    root_path = Path(workspace_root).resolve()
+    
+    # Check for direct destructive or escape patterns in the string
+    dangerous_patterns = ["/etc/", "/root", "/var/log", ".ssh", ".gnupg", ".bash_history"]
     for pattern in dangerous_patterns:
         if pattern in command:
             return False
+
+    # Extract potential paths from the command (rough estimation)
+    # Professional version would use a proper shell parser, but this is a solid deterrent
+    parts = command.split()
+    for p in parts:
+        if "/" in p or ".." in p:
+            try:
+                target = Path(p).resolve()
+                if not str(target).startswith(str(root_path)):
+                    return False
+            except:
+                pass # Not a valid path part
+                
     return True
 
 # --- Dynamic Tool Definitions ---
@@ -264,7 +278,6 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
         task_id = args.get("task_id")
         task = get_task(task_id)
         if task:
-            # If task was a sub-agent worker, we could pull its full conversation history here if we wanted
             return {"status": "success", "objective": task["objective"], "status": task["status"], "result": task["result"]}
         return {"status": "error", "message": "Task not found."}
 
@@ -302,7 +315,7 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
     if action == "run_shell":
         command = args.get("command", "")
         if not is_path_safe(command):
-            return {"status": "error", "message": "Access Denied: Command attempts to access files outside WORKSPACE_ROOT."}
+            return {"status": "error", "message": "Access Denied: Command violates WORKSPACE_ROOT safety boundary."}
 
         action_id = f"act_{int(asyncio.get_event_loop().time())}"
         save_pending_action(action_id, user_id, {"action": action, "parameters": args}, original_msg)
@@ -319,7 +332,6 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
 
 async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_action: dict = None) -> dict:
     profile = get_profile(user_id)
-    # Background workers use worker_ profile which might not exist, we use fallback
     if not profile and not user_id.startswith("worker_"): 
         return {"reply": "Run /start first."}
     if not profile:
@@ -329,6 +341,9 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_
     query_emb = await get_embedding(message)
     relevant = search_memories(user_id, query_emb, limit=5)
     system_prompt = build_system_prompt(user_id, relevant, is_heartbeat=is_heartbeat)
+    
+    # FETCH HISTORY
+    history_rows = get_history(user_id, limit=10)
     
     provider, client = get_model_client()
     model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
@@ -341,23 +356,42 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_
 
     try:
         if provider == "gemini":
-            chat_session = client.start_chat(history=[])
-            current_msg = f"{system_prompt}\n\nUser: {message}"
+            # MAP HISTORY TO GEMINI FORMAT
+            gemini_history = []
+            for h in history_rows:
+                gemini_history.append({"role": "user" if h["role"] == "user" else "model", "parts": [h["content"]]})
+            
+            chat_session = client.start_chat(history=gemini_history)
+            
+            # BUILD CONTENT PARTS (Text + Image if present)
+            parts = [f"{system_prompt}\n\n{message}"]
+            if image_bytes:
+                parts.append({"mime_type": "image/jpeg", "data": image_bytes})
+            
             for _ in range(5): 
-                response = chat_session.send_message(current_msg)
-                parts = response.candidates[0].content.parts
-                fc = next((p.function_call for p in parts if p.function_call), None)
+                response = chat_session.send_message(parts)
+                # Reset parts to just the text message after the first vision turn
+                parts = message if _ == 0 else [] 
+                
+                fc = next((p.function_call for p in response.candidates[0].content.parts if p.function_call), None)
                 if not fc:
                     reply = response.text
                     break 
+                
                 res = await handle_tool_call(user_id, fc.name, dict(fc.args), message)
                 if isinstance(res, dict) and res.get("status") == "pending_confirmation":
                     return {"action_required": res}
-                current_msg = types.Content(parts=[types.Part.from_function_response(name=fc.name, response=res)])
+                
+                parts = types.Content(parts=[types.Part.from_function_response(name=fc.name, response=res)])
             else: reply = "Recursive tool limit reached."
 
         else: # OpenAI
-            messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": message}]
+            # MAP HISTORY TO OPENAI FORMAT
+            messages = [{"role": "system", "content": system_prompt}]
+            for h in history_rows:
+                messages.append({"role": h["role"], "content": h["content"]})
+            messages.append({"role": "user", "content": message})
+            
             tools = [{"type": "function", "function": t} for t in get_tools_schema()]
             for _ in range(5):
                 response = client.chat.completions.create(model=model_name, messages=messages, tools=tools)
