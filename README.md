@@ -11,7 +11,7 @@ Not a chatbot. Not a product. Yours.
 ## Install
 
 ```bash
-git clone https://github.com/yourusername/friendlyclaw
+git clone https://github.com/me2Doc/friendlyclaw
 cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
@@ -81,7 +81,7 @@ Add these env vars on Railway:
 ## Self-Host on Your Server
 
 ```bash
-git clone https://github.com/yourusername/friendlyclaw
+git clone https://github.com/me2Doc/friendlyclaw
 cd friendlyclaw
 cp .env.example .env
 # Edit .env with your keys
