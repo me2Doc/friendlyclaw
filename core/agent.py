@@ -30,6 +30,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger("FriendlyClaw")
 
+# --- Security & Sandboxing ---
+
+def is_path_safe(command: str) -> bool:
+    """
+    Checks if a command attempts to escape the WORKSPACE_ROOT.
+    This is a 'Sandbox Lite' implementation.
+    """
+    workspace_root = os.getenv("WORKSPACE_ROOT")
+    if not workspace_root:
+        return True # If not set, we assume the user allows full access (Standard Mode)
+
+    root = Path(workspace_root).resolve()
+    # Simple check for common escape patterns
+    dangerous_patterns = ["../", "/etc", "/root", "/var/log", "/home/me2doc/.ssh"]
+    for pattern in dangerous_patterns:
+        if pattern in command:
+            return False
+    return True
+
 # --- Dynamic Tool Definitions ---
 
 def get_tools_schema():
@@ -245,6 +264,7 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
         task_id = args.get("task_id")
         task = get_task(task_id)
         if task:
+            # If task was a sub-agent worker, we could pull its full conversation history here if we wanted
             return {"status": "success", "objective": task["objective"], "status": task["status"], "result": task["result"]}
         return {"status": "error", "message": "Task not found."}
 
@@ -274,15 +294,19 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
         skill = get_all_skills().get(skill_name)
         if skill: return {"status": "success", "directive": skill["prompt"], "input": args.get("input")}
 
-    # System Actions (with Audit Log)
+    # System Actions (with Audit Log & Sandbox)
     action_map = {"run_shell": "run_shell", "type_text": "type", "click_target": "click", "take_screenshot": "screenshot"}
     action = action_map.get(name)
     if not action: return {"status": "error", "message": f"Unknown tool: {name}"}
 
     if action == "run_shell":
+        command = args.get("command", "")
+        if not is_path_safe(command):
+            return {"status": "error", "message": "Access Denied: Command attempts to access files outside WORKSPACE_ROOT."}
+
         action_id = f"act_{int(asyncio.get_event_loop().time())}"
         save_pending_action(action_id, user_id, {"action": action, "parameters": args}, original_msg)
-        return {"status": "pending_confirmation", "action_id": action_id, "display": f"Execute: `{args.get('command')}`?"}
+        return {"status": "pending_confirmation", "action_id": action_id, "display": f"Execute: `{command}`?"}
 
     result = await send_command(action, args)
     # Log system actions to audit trail
@@ -295,7 +319,11 @@ async def handle_tool_call(user_id: str, name: str, args: dict, original_msg: st
 
 async def chat(user_id: str, message: str, image_bytes: bytes = None, confirmed_action: dict = None) -> dict:
     profile = get_profile(user_id)
-    if not profile: return {"reply": "Run /start first."}
+    # Background workers use worker_ profile which might not exist, we use fallback
+    if not profile and not user_id.startswith("worker_"): 
+        return {"reply": "Run /start first."}
+    if not profile:
+        profile = {"agent_name": "Ghost-Worker", "user_name": "System"}
 
     is_heartbeat = "[HEARTBEAT MISSION]" in message
     query_emb = await get_embedding(message)

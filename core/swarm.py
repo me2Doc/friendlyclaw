@@ -1,7 +1,7 @@
 import os
 import logging
 import asyncio
-import threading
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from memory.memory import update_task, add_message
 from core.prompts import SWARM_SUBAGENT_PROMPT
@@ -35,24 +35,29 @@ class SwarmManager:
         """Asynchronous part of the worker."""
         from core.agent import chat
         
+        # SCOPED CONTEXT: Sub-agents use 'worker_{task_id}' to isolate their thinking
+        worker_context_id = f"worker_{task_id}"
+        
         update_task(task_id, "running")
         
         try:
             # Sub-agents use a specialized 'Mission' prompt from core.prompts
             prompt = SWARM_SUBAGENT_PROMPT.format(objective=objective)
             
-            result = await chat(user_id, prompt)
+            # Sub-agent turn with isolated ID
+            result = await chat(worker_context_id, prompt)
             reply = result.get("reply", "No result provided.")
             
             update_task(task_id, "completed", reply)
             logger.info(f"✅ Swarm task {task_id} completed.")
             
-            # Trigger notification
+            # Trigger notification to the ORIGINAL user_id
             await self._notify_completion(user_id, task_id, objective, reply)
             
         except Exception as e:
+            error_detail = f"Error: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"❌ Swarm task {task_id} failed: {e}")
-            update_task(task_id, "failed", str(e))
+            update_task(task_id, "failed", error_detail)
 
     async def _notify_completion(self, user_id: str, task_id: int, objective: str, result: str):
         """Notifies the user that a background task is done."""
