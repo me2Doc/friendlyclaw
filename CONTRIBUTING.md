@@ -1,4 +1,4 @@
-# Contributing to FriendlyClaw 🦅
+# Contributing to FriendlyClaw 🦀
 
 First off, thank you for considering contributing to FriendlyClaw! It’s people like you who make this a powerful tool for everyone.
 

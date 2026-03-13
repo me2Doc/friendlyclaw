@@ -1,4 +1,4 @@
-# FriendlyClaw 🦅 — Autonomous Hive Operative
+# FriendlyClaw 🦀 — Autonomous Hive Operative
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
