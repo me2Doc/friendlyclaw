@@ -1,35 +1,53 @@
 # FriendlyClaw 🦅 — Autonomous AI Operator
 
 <p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/Version-1.2.0--Alpha-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Body-OpenClaw-green.svg" alt="Powered by OpenClaw">
+  <img src="https://img.shields.io/badge/Architecture-Brain_%2B_Body-blueviolet.svg" alt="Architecture">
+</p>
+
+<p align="center">
   <strong>High-agency AI collaborator with system-level execution. Powered by OpenClaw.</strong>
 </p>
 
 ---
 
-FriendlyClaw is an **Autonomous AI Framework** designed for strategic collaboration and system management. It integrates persistent SQLite memory and diagnostic analysis with the comprehensive execution capabilities of **OpenClaw**.
+## 🦾 Unified Intelligence & Action
 
-### 🛡️ Data Sovereignty. 🧠 Eternal Memory. 🦾 System-Level Agency.
+FriendlyClaw is an **Autonomous AI Framework** that bridges the gap between conversational intelligence and physical system execution. It is built on a "Brain & Body" architecture:
 
-- **Persistent Partnership (Cognitive Persistence):** Unlike standard assistants, FriendlyClaw uses a local SQLite brain to remember every fact, preference, and historical context about you. It doesn't just chat; it evolves into a specialized digital operative that understands your unique workflow and objectives.
-- **Unified System Body:** Ships with a built-in OpenClaw gateway, allowing your partner to physically operate your machine—executing shell commands, managing UI, and processing media.
-- **Total Privacy:** 100% self-hosted. Your memories and system access tokens never leave your infrastructure.
-- **High-Agency Execution:** Designed for users who need an AI that doesn't just suggest, but *acts* on their behalf with deep contextual awareness.
+- **The Brain (FriendlyClaw Core):** A Python-based intelligence layer with **Cognitive Persistence** (SQLite-backed long-term memory) and strategic analysis modules.
+- **The Body (OpenClaw Engine):** A Node.js-based execution gateway that provides direct access to your machine's shell, UI, media, and 50+ specialized system skills.
+
+---
+
+## 🧠 Key Features
+
+### 🛡️ Data Sovereignty & Privacy
+100% self-hosted. Your persistent memories, interaction history, and system access tokens never leave your infrastructure. You choose the inference model (Local or Cloud).
+
+### 🧠 Cognitive Persistence (Eternal Memory)
+Unlike standard chatbots that forget once the session ends, FriendlyClaw uses a local SQLite brain to store every fact, preference, and historical context about you. It evolves into a **high-fidelity digital operative** that understands your specific workflows.
+
+### 🦾 High-Agency Execution
+FriendlyClaw doesn't just suggest actions—it executes them. Interfaced via the OpenClaw protocol, it can operate your shell, move your mouse, type on your behalf, and process system-level data in real-time.
 
 ---
 
 ## ⚡ Deployment
 
 ### Option 1: Docker (Recommended)
-Containerized environment for Core (Python) and Gateway (Node.js).
+The cleanest way to deploy the unified Brain and Body in an isolated environment.
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
 cd friendlyclaw
 cp .env.example .env
-# Configure .env with API keys
+# Configure .env with your API keys
 docker compose up -d
 ```
 
-### Option 2: Local Environment
+### Option 2: Local Script
 Requires Node.js 22+ and Python 3.10+.
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
@@ -41,19 +59,30 @@ chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 
 ## 🛠️ Operational Architecture
 
-| Layer | Capabilities |
-| :--- | :--- |
-| **Logic (FriendlyClaw)** | `/analyze`, `/audit`, `/consult`, `/memory`. |
-| **Execution (OpenClaw)** | `run_shell`, `type`, `click`, `screenshot`, and 50+ system skills. |
-| **Extensibility** | Load any OpenClaw-compatible skill into `system_body/skills/`. |
+FriendlyClaw presents a unified command set while delegating tasks between layers:
+
+| Module | Purpose | Example Triggers |
+| :--- | :--- | :--- |
+| **Logic Layer** | Cognitive/Strategic Tasks | `/analyze`, `/audit`, `/consult`, `/memory` |
+| **Action Layer** | System Execution | `run_shell`, `type`, `click`, `screenshot` |
+| **System Skills** | Domain-Specific Tools | `xurl`, `spotify`, `gh-issues`, `weather` |
+
+---
+
+## 🎯 Strategic Workflows
+
+- **Context-Aware Coding:** Ask your partner to "Update the auth logic in my project" using the built-in `run_shell` and `gh-issues` skills.
+- **System Automation:** "Open Chromium and search for the latest documentation on VLLM."
+- **Persistent Memory:** FriendlyClaw remembers that you prefer certain coding styles or deployment environments and applies that context to future tasks without being reminded.
+- **Security Auditing:** Use `/audit` to analyze logs or external data for hidden patterns or misalignments.
 
 ---
 
 ## 🔌 Inference Models
 
-FriendlyClaw is model-agnostic and interfaces via OpenAI-compatible APIs:
+Model-agnostic and interfaces via OpenAI-compatible APIs:
 - **Cloud:** Gemini, GPT-4o, Claude 3.5.
-- **Aggregators:** OpenRouter.
+- **Aggregators:** OpenRouter (access 100+ models).
 - **Local:** Ollama, LM Studio, or custom VLLM endpoints.
 
 ---
@@ -64,16 +93,16 @@ FriendlyClaw is model-agnostic and interfaces via OpenAI-compatible APIs:
 friendlyclaw/
 ├── main.py              # Unified entry point (Initializes Core + Gateway)
 ├── core/                # Agent logic & operational persona engine
-├── memory/              # SQLite persistent context store
-├── system_body/         # OpenClaw execution engine (Built-in)
+├── memory/              # SQLite persistent context store (The Brain)
+├── system_body/         # OpenClaw execution engine (The Body)
 ├── platforms/           # Telegram & CLI communication layers
-└── skills/              # Diagnostic & strategic modules
+└── skills/              # Strategic & diagnostic modules
 ```
 
 ---
 
 ## 🚀 Vision
-Built for the **Claw Ecosystem**. A strategic tool for elite technical operators.
+Built for the **Claw Ecosystem**. A strategic tool for elite technical operators who need a partner that acts as a digital extension of their own agency.
 
 ---
 
