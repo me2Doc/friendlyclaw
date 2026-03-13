@@ -1,29 +1,59 @@
 import os
 import base64
+import logging
 from pathlib import Path
 from memory.memory import get_profile, get_history, get_memories, get_facts, add_message, save_memory, add_fact
 import google.generativeai as genai
 from openai import OpenAI
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.File_Stream = logging.FileHandler("data/friendlyclaw.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("FriendlyClaw")
+
 def get_model_client():
     provider = os.getenv("MODEL_PROVIDER", "gemini").lower()
-    if provider == "gemini":
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        return "gemini", genai.GenerativeModel(os.getenv("MODEL_NAME", "gemini-2.0-flash"))
-    elif provider == "openai":
-        return "openai", OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    elif provider == "openrouter":
-        return "openai", OpenAI(
-            api_key=os.getenv("OPENROUTER_API_KEY"),
-            base_url="https://openrouter.ai/api/v1"
-        )
-    elif provider == "custom":
-        return "openai", OpenAI(
-            api_key=os.getenv("CUSTOM_API_KEY", "fake"),
-            base_url=os.getenv("CUSTOM_BASE_URL", "http://localhost:8317")
-        )
-    else:
-        raise ValueError(f"Unknown MODEL_PROVIDER: {provider}")
+    model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+    
+    try:
+        if provider == "gemini":
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY not found in environment")
+            genai.configure(api_key=api_key)
+            return "gemini", genai.GenerativeModel(model_name)
+        
+        elif provider == "openai":
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY not found in environment")
+            return "openai", OpenAI(api_key=api_key)
+        
+        elif provider == "openrouter":
+            api_key = os.getenv("OPENROUTER_API_KEY")
+            if not api_key:
+                raise ValueError("OPENROUTER_API_KEY not found in environment")
+            return "openai", OpenAI(
+                api_key=api_key,
+                base_url="https://openrouter.ai/api/v1"
+            )
+        
+        elif provider == "custom":
+            return "openai", OpenAI(
+                api_key=os.getenv("CUSTOM_API_KEY", "fake"),
+                base_url=os.getenv("CUSTOM_BASE_URL", "http://localhost:8317")
+            )
+        else:
+            raise ValueError(f"Unknown MODEL_PROVIDER: {provider}")
+    except Exception as e:
+        logger.error(f"Error initializing model client: {e}")
+        raise
 
 
 def build_system_prompt(user_id: str) -> str:
@@ -106,6 +136,7 @@ def extract_facts_from_message(user_id: str, message: str, response: str):
             idx = lower.index(trigger)
             snippet = message[idx:idx+80].strip()
             add_fact(user_id, snippet)
+            logger.info(f"Fact extracted for user {user_id}: {snippet}")
             break
 
 
@@ -117,10 +148,10 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None) -> str:
     system_prompt = build_system_prompt(user_id)
     history = get_history(user_id, limit=20)
 
-    provider, client = get_model_client()
-    model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
-
     try:
+        provider, client = get_model_client()
+        model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+
         if provider == "gemini":
             parts = []
             if image_bytes:
@@ -171,4 +202,5 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None) -> str:
         return reply
 
     except Exception as e:
-        return f"Error: {str(e)}"
+        logger.error(f"Chat error for user {user_id}: {e}")
+        return "I'm having trouble thinking right now. Check my logs or try again later."
