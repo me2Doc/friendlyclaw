@@ -4,6 +4,7 @@ import asyncio
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from memory.memory import update_task, add_message
+from core.prompts import SWARM_SUBAGENT_PROMPT
 
 logger = logging.getLogger("FriendlyClaw.Swarm")
 
@@ -22,8 +23,13 @@ class SwarmManager:
         self._executor.submit(self._run_worker, user_id, task_id, objective)
 
     def _run_worker(self, user_id: str, task_id: int, objective: str):
-        """Internal worker logic running in a thread."""
-        asyncio.run(self._async_worker(user_id, task_id, objective))
+        """Internal worker logic running in a thread with its own event loop."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self._async_worker(user_id, task_id, objective))
+        finally:
+            loop.close()
 
     async def _async_worker(self, user_id: str, task_id: int, objective: str):
         """Asynchronous part of the worker."""
@@ -32,8 +38,8 @@ class SwarmManager:
         update_task(task_id, "running")
         
         try:
-            # Sub-agents use a specialized 'Mission' prompt
-            prompt = f"[SWARM SUB-AGENT OBJECTIVE] {objective}\n\nPerform this mission autonomously. Use tools as needed. Provide a comprehensive final report."
+            # Sub-agents use a specialized 'Mission' prompt from core.prompts
+            prompt = SWARM_SUBAGENT_PROMPT.format(objective=objective)
             
             result = await chat(user_id, prompt)
             reply = result.get("reply", "No result provided.")

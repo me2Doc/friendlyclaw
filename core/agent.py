@@ -17,6 +17,7 @@ from tools.openclaw_bridge import send_command
 from tools.web_intelligence import deep_read_url
 from core.scheduler import schedule_mission, list_missions
 from core.swarm import swarm
+from core.prompts import MODE_DIRECTIVE_SENTINEL
 
 # Configure logging
 logging.basicConfig(
@@ -209,7 +210,7 @@ def build_system_prompt(user_id: str, relevant_memories: list = None, is_heartbe
 
     visual_block = f"\n\nVisual reference for operational identity:\n{visual_context}" if visual_context else ""
     openclaw_skills = ", ".join(get_openclaw_skills())
-    mode_directive = "\n🚨 AUTONOMOUS SENTINEL MODE ACTIVE." if is_heartbeat else ""
+    mode_directive = MODE_DIRECTIVE_SENTINEL if is_heartbeat else ""
 
     return f"""You are {agent_name} — an Autonomous Strategic Partner.
 Primary User: {user_name}. Persona: {agent_personality}.{mode_directive}

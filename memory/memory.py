@@ -11,7 +11,8 @@ DB_PATH = Path("data/friendlyclaw.db")
 @contextmanager
 def get_db():
     DB_PATH.parent.mkdir(exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    # Added timeout to prevent 'Database is locked' during concurrent swarm operations
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.enable_load_extension(True)
     sqlite_vec.load(conn)
     conn.enable_load_extension(False)
