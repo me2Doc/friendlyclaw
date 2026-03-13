@@ -1,35 +1,34 @@
-# FriendlyClaw 🦅 — Pro-Grade AI Strategic Partner
+# FriendlyClaw 🦅 — Autonomous Hive Operative
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/Status-Pro--Grade-blueviolet.svg" alt="Status">
-  <img src="https://img.shields.io/badge/Memory-Semantic--RAG-green.svg" alt="Memory">
-  <img src="https://img.shields.io/badge/Body-OpenClaw-green.svg" alt="Powered by OpenClaw">
+  <img src="https://img.shields.io/badge/Edition-Hive-orange.svg" alt="Hive Edition">
+  <img src="https://img.shields.io/badge/Memory-Eternal--RAG-green.svg" alt="Memory">
+  <img src="https://img.shields.io/badge/Platform-Telegram--CLI-blueviolet.svg" alt="Platforms">
 </p>
 
 <p align="center">
-  <strong>The High-Agency AI Operator for Every User.</strong><br>
-  Cross-platform (CLI/Telegram) system control with persistent semantic memory.
+  <strong>The Professional AI Strategic Partner.</strong><br>
+  Multi-agent delegation, persistent semantic memory, and proactive system control.
 </p>
 
 ---
 
-## 🦾 Beyond a Chatbot: Your Digital Operative
+## 🦾 Evolution of Agency
 
-FriendlyClaw is not a standard AI assistant. It is a **Pro High-Value Partner** designed to act with agency and precision. Whether you are a developer managing a server or a regular user seeking an intelligent system companion, FriendlyClaw bridge the gap between human intent and machine execution.
+FriendlyClaw Hive is a pro-grade autonomous partner designed for high-fidelity system interaction. Unlike standard assistants, the Hive is a multi-threaded system where a **Commander Brain** orchestrates a **Swarm of specialists** to achieve your objectives.
 
-### 💎 Why FriendlyClaw?
+### 💎 Core Hive Features
 
-- **🧠 Eternal Semantic Memory (RAG):** Unlike basic LLMs that forget, FriendlyClaw uses vector search to retrieve relevant context from your entire history. It learns your style, your environment, and your preferences.
-- **🛡️ Vault-Grade Security:** "Human-in-the-Loop" architecture. Every sensitive system command is intercepted and requires your explicit approval (CLI or Telegram button) before execution.
-- **🦾 Native Tool Execution:** Zero-fragility interaction. FriendlyClaw uses native function calling to control your shell, UI, mouse, and keyboard with 100% reliability.
-- **🌍 Cross-Platform Agency:** Run your partner in your terminal or take it with you on **Telegram**. A unified command center that lives where you do.
+- **🐝 Swarm Commander:** Delegate complex missions to background "Ghost Workers." Parallel research and execution without blocking your chat.
+- **🧠 Eternal Memory (RAG):** Context-aware retrieval using `sqlite-vec`. Your partner remembers details from months ago via semantic search.
+- **🛡️ Vault Security:** "Human-in-the-Loop" architecture. All sensitive system commands require your explicit approval via persistent intercept buttons.
+- **💓 Proactive Heartbeat:** The Hive lives 24/7. It periodically checks your `HEARTBEAT.md` missions to monitor your system and environment while you sleep.
+- **👁️ Visual Sentinel:** Autonomous environmental audits using camera and screen capture tools.
 
 ---
 
-## ⚡ Quick Start (Setup in 2 Minutes)
-
-FriendlyClaw is designed to be accessible for everyone. No complex configuration required:
+## ⚡ Quick Start
 
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
@@ -37,55 +36,46 @@ cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
 
-The interactive wizard will walk you through:
+The Hive Wizard will guide you through:
 1.  **Platform Choice:** CLI (Terminal) or Telegram Bot.
-2.  **API Keys:** Setup for Gemini (Free/Recommended), OpenRouter, or OpenAI.
-3.  **Onboarding:** Your partner will introduce itself and learn your specific objectives.
+2.  **API Keys:** Setup for Gemini (Recommended), OpenRouter, or OpenAI.
+3.  **Onboarding:** Meet your partner and set your tactical goals.
 
 ---
 
-## 🤖 Telegram Bot Setup (Pro Guide)
+## 📚 Documentation
 
-Take your partner anywhere:
+Explore the depths of the Hive Mind:
 
-1.  **Chat with @BotFather** on Telegram.
-2.  Create a `/newbot` and copy the **API Token**.
-3.  Paste the token into the `friendlyclaw.sh` wizard.
-4.  Find your bot, send **`/start`**, and your Pro Partner is live.
-
----
-
-## 🧩 Architectural Excellence
-
-FriendlyClaw operates on a "Brain & Body" architecture:
-
-| Component | Layer | Purpose |
-| :--- | :--- | :--- |
-| **The Brain** | Python | Strategic reasoning, Semantic RAG memory, and platform logic. |
-| **The Body** | OpenClaw | 50+ Native System Skills (Shell, Spotify, GitHub, Media). |
-| **The Bridge** | WebSocket | Ultra-low latency communication between reasoning and action. |
+- **[🧠 Architecture](./docs/architecture/HIVE_MIND.md):** Deep dive into the Brain & Body system.
+- **[🕹️ Command Reference](./docs/guides/COMMANDS.md):** Full list of tools, skills, and missions.
+- **[🛠️ Setup Guide](./docs/guides/SETUP.md):** Pro tips for production deployment and local models.
 
 ---
 
-## 🎯 Pro Use-Cases
+## 🧩 Structure at a Glance
 
-- **Strategic Partnering:** "Analyze my recent coding commits and suggest a security audit."
-- **System Automation:** "Take a screenshot of my dashboard every hour and notify me if the status changes."
-- **Persistent Memory:** "Remember that I prefer deploying to the staging server by default."
-- **Remote Control:** Use your Telegram bot to execute safe commands or query your machine's state from anywhere.
+The project is organized for modularity and technical transparency:
+
+- `core/`: The reasoning engine, swarm management, and proactive loops.
+- `memory/`: SQLite-Vec persistent storage and RAG logic.
+- `platforms/`: Interaction layers for Telegram and CLI.
+- `system_body/`: The OpenClaw execution gateway (Node.js).
+- `tools/`: Professional integrations (Scrapling, Web Intelligence).
 
 ---
 
-## 🏗️ Technical Requirements
+## 🎯 Strategic Partnering
 
-- **Python 3.10+** (Core Reasoning)
-- **Node.js 22.12.0+** (System Execution)
-- **API Key:** Gemini (Free Tier available at Google AI Studio) or OpenAI.
+Use the Hive for more than just chat:
+- "Spawn a sub-agent to audit my server logs for the last 24 hours."
+- "Schedule a mission to check my GitHub notifications every hour."
+- "Run a visual pulse and tell me if my screen has any errors visible."
 
 ---
 
 ## 🚀 Vision
-FriendlyClaw is built for users who demand more than a simple chat interface. It is a tool of agency, designed to evolve alongside its user as a high-fidelity strategic partner.
+FriendlyClaw is the digital extension of your own agency. It is a sovereign operative, built to evolve into the ultimate personal OS commander.
 
 ---
 
