@@ -35,25 +35,37 @@ FriendlyClaw doesn't just suggest actions—it executes them. Interfaced via the
 
 ---
 
-## ⚡ Deployment
+## ⚡ Quick Start
 
-### Option 1: Docker (Recommended)
-The cleanest way to deploy the unified Brain and Body in an isolated environment.
-```bash
-git clone https://github.com/me2Doc/friendlyclaw
-cd friendlyclaw
-cp .env.example .env
-# Configure .env with your API keys
-docker compose up -d
-```
+The fastest way to get FriendlyClaw up and running:
 
-### Option 2: Local Script
-Requires Node.js 22+ and Python 3.10+.
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
 cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
+
+The script will walk you through setting up your API keys and choosing between **CLI** or **Telegram** mode.
+
+---
+
+## 🤖 Telegram Bot Setup (If choosing Telegram)
+
+Setting up your bot only takes a minute:
+
+1.  **Open Telegram** and search for **@BotFather**.
+2.  Send `/newbot` and follow the prompts (give it a name and a username).
+3.  **Copy the API Token** provided by @BotFather.
+4.  Paste this token when the `friendlyclaw.sh` script asks for it.
+5.  Once the app is running, find your bot in Telegram and send **`/start`** to begin!
+
+---
+
+## 🏗️ Requirements
+
+- **Python 3.10+**
+- **Node.js 22.12.0+** (Required for the OpenClaw "Body")
+- An API Key (Gemini is recommended and free!)
 
 ---
 

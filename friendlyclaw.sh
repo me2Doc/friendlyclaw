@@ -28,7 +28,29 @@ if ! command -v python3 &> /dev/null; then
     echo "Install it: https://python.org"
     exit 1
 fi
-echo -e "${GREEN}✅ Python: $(python3 --version)${RESET}"
+
+# Check Python version (>= 3.10)
+PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+if (( $(echo "$PYTHON_VERSION < 3.10" | bc -l) )); then
+    echo -e "${RED}❌ Python version 3.10+ required (found $PYTHON_VERSION).${RESET}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Python: $PYTHON_VERSION${RESET}"
+
+# ── Node.js check ──────────────────────────────────────────
+if ! command -v node &> /dev/null; then
+    echo -e "${RED}❌ Node.js not found.${RESET}"
+    echo "Install it (v22+ required): https://nodejs.org"
+    exit 1
+fi
+
+NODE_VERSION=$(node -v | cut -d'v' -f2)
+NODE_MAJOR=$(echo $NODE_VERSION | cut -d'.' -f1)
+if [ "$NODE_MAJOR" -lt 22 ]; then
+    echo -e "${RED}❌ Node.js v22+ required (found v$NODE_VERSION).${RESET}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Node.js: v$NODE_VERSION${RESET}"
 
 # ── Virtual environment ───────────────────────────────────
 if [ ! -d "venv" ]; then
@@ -112,6 +134,14 @@ if [ ! -f ".env" ]; then
 
     echo ""
     echo -e "${GREEN}✅ Configuration saved${RESET}"
+
+    if [ "$PLATFORM_CHOICE" = "1" ]; then
+        echo ""
+        echo -e "${CYAN}${BOLD}Next Step:${RESET}"
+        echo -e "  1. Your bot is ready for configuration."
+        echo -e "  2. Once the app starts, go to Telegram and search for your bot."
+        echo -e "  3. Send ${YELLOW}/start${RESET} to begin onboarding."
+    fi
 else
     echo -e "${GREEN}✅ .env exists — skipping setup${RESET}"
 fi

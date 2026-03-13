@@ -47,6 +47,8 @@ def main():
 
     try:
         if "--telegram" in sys.argv or platform == "telegram":
+            print("🤖 Starting Telegram platform...")
+            print("💡 Reminder: Find your bot in Telegram and send /start to begin.")
             from platforms.telegram_bot import run_telegram
             run_telegram()
         elif "--cli" in sys.argv or platform == "cli":
