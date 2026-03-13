@@ -1,0 +1,5 @@
+{
+    "trigger": "/sys",
+    "description": "Execute a system command via OpenClaw",
+    "prompt": "The user wants to execute a system command on their machine using your OpenClaw connection. Determine the best action ('run_shell', 'type', 'click', 'screenshot') and output the required JSON block to execute it. Do not explain yourself, just output the JSON."
+}

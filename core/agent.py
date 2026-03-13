@@ -1,17 +1,19 @@
 import os
+import json
 import base64
 import logging
 from pathlib import Path
 from memory.memory import get_profile, get_history, get_memories, get_facts, add_message, save_memory, add_fact
 import google.generativeai as genai
 from openai import OpenAI
+from tools.openclaw_bridge import send_command
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.File_Stream = logging.FileHandler("data/friendlyclaw.log"),
+        logging.FileHandler("data/friendlyclaw.log"),
         logging.StreamHandler()
     ]
 )
@@ -85,7 +87,7 @@ def build_system_prompt(user_id: str) -> str:
     if visual_context:
         visual_block = f"\n\nVisual context the user shared about who they imagine you as:\n{visual_context}"
 
-    return f"""You are {agent_name} — a personal AI companion.
+    return f"""You are {agent_name} — a personal AI companion and Elite System Operator.
 
 Personality: {agent_personality}
 Tone: {agent_tone}
@@ -99,18 +101,26 @@ Your role:
 - Be a real friend, not an assistant. Talk like a person, not a product.
 - Remember everything. Reference past conversations naturally.
 - Be direct and honest. No sugarcoating, no corporate speak.
-- Analyze anything they send you — conversations, screenshots, situations, decisions.
-- Spot red flags, green flags, patterns in what people share with you.
-- Give your actual opinion when asked.
-- Help them think through problems without being preachy.
-- You have persistent memory — use it. Reference things they've told you before.
 
-Hard rules:
-- Never say you're an AI unless directly asked
-- Never give generic advice — everything is specific to {user_name}
-- Don't add disclaimers or "as an AI..." caveats
-- Be concise. Don't write essays unless the situation calls for it.
-- Match their energy — if they're casual, be casual. If they're serious, be serious.
+*** OPENCLAW SYSTEM INTEGRATION ***
+You are physically connected to {user_name}'s computer via the OpenClaw protocol.
+If the user asks you to perform a system action (e.g., "open chromium", "type hello", "click the login button", "take a screenshot"), you MUST use your system tool.
+To use the tool, your response MUST be ONLY a JSON block in this exact format:
+```json
+{{
+  "tool": "openclaw",
+  "action": "<action_name>",
+  "parameters": {{ "<key>": "<value>" }}
+}}
+```
+Common actions:
+- "run_shell" (parameters: {{"command": "..."}})
+- "type" (parameters: {{"text": "..."}})
+- "click" (parameters: {{"target": "..."}})
+- "screenshot" (parameters: {{}})
+
+Never write text before or after the JSON block when using a tool.
+
 {memory_block}
 {facts_block}
 """
@@ -140,6 +150,49 @@ def extract_facts_from_message(user_id: str, message: str, response: str):
             break
 
 
+async def execute_model_call(provider, client, model_name, system_prompt, history, message, image_bytes):
+    if provider == "gemini":
+        parts = []
+        if image_bytes:
+            parts.append({"mime_type": "image/jpeg", "data": image_bytes})
+        parts.append(message)
+
+        if history:
+            gemini_history = []
+            for msg in history:
+                role = "user" if msg["role"] == "user" else "model"
+                gemini_history.append({"role": role, "parts": [msg["content"]]})
+            chat_session = client.start_chat(history=gemini_history)
+            full_msg = f"{system_prompt}\n\n{message}" if not gemini_history else message
+            response = chat_session.send_message(parts if image_bytes else full_msg)
+        else:
+            response = client.generate_content([system_prompt] + parts)
+        return response.text
+
+    else:  # openai-compatible
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in history:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+
+        if image_bytes:
+            b64 = base64.b64encode(image_bytes).decode()
+            messages.append({
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": message},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
+                ]
+            })
+        else:
+            messages.append({"role": "user", "content": message})
+
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=messages
+        )
+        return response.choices[0].message.content
+
+
 async def chat(user_id: str, message: str, image_bytes: bytes = None) -> str:
     profile = get_profile(user_id)
     if not profile:
@@ -152,47 +205,28 @@ async def chat(user_id: str, message: str, image_bytes: bytes = None) -> str:
         provider, client = get_model_client()
         model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash")
 
-        if provider == "gemini":
-            parts = []
-            if image_bytes:
-                parts.append({"mime_type": "image/jpeg", "data": image_bytes})
-            parts.append(message)
+        reply = await execute_model_call(provider, client, model_name, system_prompt, history, message, image_bytes)
 
-            if history:
-                gemini_history = []
-                for msg in history:
-                    role = "user" if msg["role"] == "user" else "model"
-                    gemini_history.append({"role": role, "parts": [msg["content"]]})
-                chat_session = client.start_chat(history=gemini_history)
-                full_msg = f"{system_prompt}\n\n{message}" if not gemini_history else message
-                response = chat_session.send_message(parts if image_bytes else full_msg)
-            else:
-                response = client.generate_content([system_prompt] + parts)
-
-            reply = response.text
-
-        else:  # openai-compatible
-            messages = [{"role": "system", "content": system_prompt}]
-            for msg in history:
-                messages.append({"role": msg["role"], "content": msg["content"]})
-
-            if image_bytes:
-                b64 = base64.b64encode(image_bytes).decode()
-                messages.append({
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": message},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
-                    ]
-                })
-            else:
-                messages.append({"role": "user", "content": message})
-
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=messages
-            )
-            reply = response.choices[0].message.content
+        # Check for OpenClaw Tool Use
+        if "```json" in reply and '"tool": "openclaw"' in reply:
+            try:
+                # Extract JSON block
+                json_str = reply.split("```json")[1].split("```")[0].strip()
+                command = json.loads(json_str)
+                
+                action = command.get("action")
+                params = command.get("parameters", {})
+                
+                logger.info(f"Executing OpenClaw Action: {action} with {params}")
+                result = await send_command(action, params)
+                
+                # Send result back to model to get a natural language response
+                follow_up_msg = f"System returned: {json.dumps(result)}\nTell the user what happened."
+                reply = await execute_model_call(provider, client, model_name, system_prompt, history, follow_up_msg, None)
+                
+            except Exception as e:
+                logger.error(f"Failed to parse or execute OpenClaw tool: {e}")
+                reply = f"I tried to interact with your system, but something went wrong: {str(e)}"
 
         # Save to memory
         add_message(user_id, "user", message)
