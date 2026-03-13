@@ -8,6 +8,12 @@ logger = logging.getLogger("FriendlyClaw.OpenClaw")
 
 OPENCLAW_URL = os.getenv("OPENCLAW_WS_URL", "ws://127.0.0.1:18789")
 
+# HARD SECURITY: Prohibited command patterns that will be blocked before transmission.
+COMMAND_BLACKLIST = [
+    "rm -rf /", "rm -rf *", "mkfs", "dd if=", "> /dev/sd", 
+    "chmod -R 777", "chown -R", ":(){", "shutdown", "reboot"
+]
+
 async def check_gateway_health(timeout=30) -> bool:
     """
     Polls the OpenClaw gateway until it responds or the timeout is reached.
@@ -29,9 +35,18 @@ async def check_gateway_health(timeout=30) -> bool:
 async def send_command(action: str, parameters: dict = None) -> dict:
     """
     Sends a command to the OpenClaw Gateway via WebSocket.
+    Includes hard security validation for shell commands.
     """
     if parameters is None:
         parameters = {}
+
+    # SECURITY VALIDATION
+    if action == "run_shell" and "command" in parameters:
+        cmd = parameters["command"].lower()
+        for blocked in COMMAND_BLACKLIST:
+            if blocked in cmd:
+                logger.warning(f"SECURITY ALERT: Blocked attempted destructive command: {cmd}")
+                return {"status": "error", "message": f"Security violation: Command '{blocked}' is prohibited."}
         
     payload = {
         "action": action,
