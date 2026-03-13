@@ -1,0 +1,7 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "pip install -r requirements.txt && python3 main.py --telegram"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

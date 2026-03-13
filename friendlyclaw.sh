@@ -1,0 +1,128 @@
+#!/bin/bash
+
+set -e
+
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+RESET='\033[0m'
+BOLD='\033[1m'
+
+echo ""
+echo -e "${CYAN}${BOLD}"
+echo "  ███████╗██████╗ ██╗███████╗███╗   ██╗██████╗ ██╗  ██╗   ██╗"
+echo "  ██╔════╝██╔══██╗██║██╔════╝████╗  ██║██╔══██╗██║  ╚██╗ ██╔╝"
+echo "  █████╗  ██████╔╝██║█████╗  ██╔██╗ ██║██║  ██║██║   ╚████╔╝ "
+echo "  ██╔══╝  ██╔══██╗██║██╔══╝  ██║╚██╗██║██║  ██║██║    ╚██╔╝  "
+echo "  ██║     ██║  ██║██║███████╗██║ ╚████║██████╔╝███████╗██║   "
+echo "  ╚═╝     ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝   "
+echo "                       C L A W"
+echo -e "${RESET}"
+echo -e "${BOLD}  Your personal AI. Self-hosted. Remembers everything.${RESET}"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# ── Python check ──────────────────────────────────────────
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}❌ Python 3 not found.${RESET}"
+    echo "Install it: https://python.org"
+    exit 1
+fi
+echo -e "${GREEN}✅ Python: $(python3 --version)${RESET}"
+
+# ── Virtual environment ───────────────────────────────────
+if [ ! -d "venv" ]; then
+    echo "📦 Creating virtual environment..."
+    python3 -m venv venv
+fi
+source venv/bin/activate
+echo -e "${GREEN}✅ Virtual environment active${RESET}"
+
+# ── Install dependencies ──────────────────────────────────
+echo "📥 Installing dependencies..."
+pip install -q -r requirements.txt
+echo -e "${GREEN}✅ Dependencies installed${RESET}"
+
+# ── .env setup ────────────────────────────────────────────
+if [ ! -f ".env" ]; then
+    cp .env.example .env
+    echo ""
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BOLD}  Setup${RESET}"
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo ""
+
+    # Platform
+    echo -e "${YELLOW}Platform:${RESET}"
+    echo "  1) Telegram"
+    echo "  2) CLI (terminal)"
+    read -p "  Choose [1/2]: " PLATFORM_CHOICE
+
+    if [ "$PLATFORM_CHOICE" = "1" ]; then
+        sed -i "s/PLATFORM=cli/PLATFORM=telegram/" .env
+        echo ""
+        echo -e "${YELLOW}Telegram Bot Token${RESET}"
+        echo "  Get it from @BotFather on Telegram"
+        read -p "  Token: " BOT_TOKEN
+        sed -i "s/your_telegram_bot_token_here/$BOT_TOKEN/" .env
+    else
+        sed -i "s/PLATFORM=telegram/PLATFORM=cli/" .env
+    fi
+
+    # Model provider
+    echo ""
+    echo -e "${YELLOW}Model Provider:${RESET}"
+    echo "  1) Gemini (free — recommended)"
+    echo "  2) OpenAI"
+    echo "  3) OpenRouter (100+ models)"
+    echo "  4) Custom / Local (Ollama, CLIProxyAPI, etc)"
+    read -p "  Choose [1/2/3/4]: " MODEL_CHOICE
+
+    if [ "$MODEL_CHOICE" = "1" ]; then
+        sed -i "s/MODEL_PROVIDER=gemini/MODEL_PROVIDER=gemini/" .env
+        echo ""
+        echo -e "${YELLOW}Gemini API Key${RESET}"
+        echo "  Get it free at: https://aistudio.google.com/apikey"
+        read -p "  Key: " GEMINI_KEY
+        sed -i "s/your_gemini_api_key_here/$GEMINI_KEY/" .env
+
+    elif [ "$MODEL_CHOICE" = "2" ]; then
+        sed -i "s/MODEL_PROVIDER=gemini/MODEL_PROVIDER=openai/" .env
+        sed -i "s/MODEL_NAME=gemini-2.0-flash/MODEL_NAME=gpt-4o/" .env
+        read -p "  OpenAI API Key: " OPENAI_KEY
+        sed -i "s/OPENAI_API_KEY=/OPENAI_API_KEY=$OPENAI_KEY/" .env
+
+    elif [ "$MODEL_CHOICE" = "3" ]; then
+        sed -i "s/MODEL_PROVIDER=gemini/MODEL_PROVIDER=openrouter/" .env
+        sed -i "s/MODEL_NAME=gemini-2.0-flash/MODEL_NAME=google\/gemini-pro/" .env
+        echo ""
+        echo "  Get key at: https://openrouter.ai"
+        read -p "  OpenRouter API Key: " OR_KEY
+        sed -i "s/OPENROUTER_API_KEY=/OPENROUTER_API_KEY=$OR_KEY/" .env
+
+    elif [ "$MODEL_CHOICE" = "4" ]; then
+        sed -i "s/MODEL_PROVIDER=gemini/MODEL_PROVIDER=custom/" .env
+        read -p "  Base URL (e.g. http://localhost:8317): " BASE_URL
+        read -p "  API Key (or 'fake' for local): " CUSTOM_KEY
+        read -p "  Model name: " MODEL_NAME
+        sed -i "s|CUSTOM_BASE_URL=http://localhost:8317|CUSTOM_BASE_URL=$BASE_URL|" .env
+        sed -i "s/CUSTOM_API_KEY=fake/CUSTOM_API_KEY=$CUSTOM_KEY/" .env
+        sed -i "s/MODEL_NAME=gemini-2.0-flash/MODEL_NAME=$MODEL_NAME/" .env
+    fi
+
+    echo ""
+    echo -e "${GREEN}✅ Configuration saved${RESET}"
+else
+    echo -e "${GREEN}✅ .env exists — skipping setup${RESET}"
+fi
+
+# ── Launch ────────────────────────────────────────────────
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${GREEN}${BOLD}  FriendlyClaw is starting...${RESET}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+python3 main.py
