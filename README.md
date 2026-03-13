@@ -8,6 +8,10 @@
 </p>
 
 <p align="center">
+  <img src="assets/mascot.png" width="300" alt="FriendlyClaw Mascot">
+</p>
+
+<p align="center">
   <strong>The Professional AI Strategic Partner.</strong><br>
   Multi-agent delegation, persistent semantic memory, and proactive system control.
 </p>
