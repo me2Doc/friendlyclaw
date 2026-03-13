@@ -78,6 +78,28 @@ FriendlyClaw presents a unified command set while delegating tasks between layer
 
 ---
 
+## 🧩 Extensibility
+
+FriendlyClaw supports a dual-skill architecture, allowing you to extend both its intelligence and its physical capabilities.
+
+### 1. Native System Skills (OpenClaw Body)
+To add new physical capabilities (e.g., controlling a new app or API), drop an OpenClaw-compatible skill folder into `system_body/skills/`.
+- FriendlyClaw will automatically detect these on boot.
+- The AI will understand how to use these new "muscles" natively.
+
+### 2. Logic Extensions (FriendlyClaw Brain)
+To add new analytical commands or persona-specific logic, drop a `.json` file into `skills/custom/`.
+Example `skills/custom/custom_audit.json`:
+```json
+{
+    "trigger": "/custom_audit",
+    "description": "Perform a specialized security audit",
+    "prompt": "Analyze the following for specific alignment with [Your Custom Policy]..."
+}
+```
+
+---
+
 ## 🔌 Inference Models
 
 Model-agnostic and interfaces via OpenAI-compatible APIs:
