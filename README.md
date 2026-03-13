@@ -12,27 +12,69 @@
 </p>
 
 <p align="center">
-  <strong>The Professional AI Strategic Partner.</strong><br>
-  Multi-agent delegation, persistent semantic memory, and proactive system control.
+  <strong>Recursive Brain</strong> • <strong>Multi-Agent Swarm</strong> • <strong>Self-Healing Body</strong> • <strong>Eternal Memory</strong>
+</p>
+
+<p align="center">
+  <strong>The Professional AI Strategic Partner for Elite Operators.</strong><br>
+  A unified "Brain & Body" architecture for total system control via CLI or Telegram.
 </p>
 
 ---
 
-## 🦾 Evolution of Agency
+## 🚀 Why FriendlyClaw?
 
-FriendlyClaw Hive is a pro-grade autonomous partner designed for high-fidelity system interaction. Unlike standard assistants, the Hive is a multi-threaded system where a **Commander Brain** orchestrates a **Swarm of specialists** to achieve your objectives.
+FriendlyClaw is not a "chatbot." It is a **Sovereign Digital Operative**. While standard AI assistants wait for you to type and forget what you said yesterday, FriendlyClaw Hive lives on your system, works while you sleep, and retrieves your entire history semantically.
 
-### 💎 Core Hive Features
+### 📊 Comparison: Partner vs. Assistant
 
-- **🐝 Swarm Commander:** Delegate complex missions to background "Ghost Workers." Parallel research and execution without blocking your chat.
-- **🧠 Eternal Memory (RAG):** Context-aware retrieval using `sqlite-vec`. Your partner remembers details from months ago via semantic search.
-- **🛡️ Vault Security:** "Human-in-the-Loop" architecture. All sensitive system commands require your explicit approval via persistent intercept buttons.
-- **💓 Proactive Heartbeat:** The Hive lives 24/7. It periodically checks your `HEARTBEAT.md` missions to monitor your system and environment while you sleep.
-- **👁️ Visual Sentinel:** Autonomous environmental audits using camera and screen capture tools.
+| Feature | Standard Assistants | **FriendlyClaw Hive** |
+| :--- | :--- | :--- |
+| **Agency** | Reactive (Waits for input) | **Proactive (Heartbeat + Missions)** |
+| **Memory** | Linear (Forgets over time) | **Eternal (SQLite-Vec RAG)** |
+| **Execution** | Text-only / Sandbox | **System-Wide (50+ Native Skills)** |
+| **Concurrency** | Single-threaded | **Multi-threaded (Swarm Workers)** |
+| **Reliability** | Crashes = Manual Restart | **Self-Healing (Watchdog Loop)** |
+| **Privacy** | SaaS-owned logs | **100% Local SQLite Brain** |
 
 ---
 
-## ⚡ Quick Start
+## 💎 Core Hive Capabilities
+
+### 🐝 1. Swarm Commander (Parallel Intelligence)
+The Commander Brain (`brain/core/agent.py`) can spawn **Ghost Workers** to handle heavy lifting in the background.
+- **Delegate & Continue:** Ask your partner to "Research RISC-V history" while you continue talking about your current code.
+- **Task Board:** Track every background mission via `/tasks` and pull results with `/synthesize`.
+
+### 🧠 2. Eternal Memory (Semantic RAG)
+Powered by `sqlite-vec`, FriendlyClaw performs a **768-dim vector search** on every turn.
+- **Deep Retrieval:** It remembers preferences, technical decisions, and context from months ago.
+- **Fact Extraction:** Automatically commits important system data to its long-term factual store.
+
+### 🛡️ 3. Vault-Grade Security (Human-in-the-Loop)
+We believe in **High Agency with High Accountability**.
+- **Permission Intercept:** Every shell command triggers a UI prompt. It only runs once you click **Confirm**.
+- **Workspace Sandbox:** Set a `WORKSPACE_ROOT` to lock the AI inside a specific directory, preventing accidental system-wide escapes.
+
+### 💓 4. Proactive Heartbeat (The Sentinel)
+FriendlyClaw checks your `HEARTBEAT.md` file every 15 minutes.
+- **Autonomous Missions:** "Monitor my server temperature," "Check for GitHub PRs," or "Audit logs for anomalies."
+- **Visual Pulse:** The agent can use camera snapshots or screen captures to "look" at its environment and report findings.
+
+---
+
+## 🔗 Unified Model Fallback
+
+FriendlyClaw is indestructible. If your primary API fails, it automatically rolls over to ensure your missions never stop.
+
+1.  **Gemini 2.0 Flash** (Fastest, Multi-modal, Default)
+2.  **OpenRouter** (Access to Claude 3.5, Llama 3, etc.)
+3.  **OpenAI GPT-4o** (Reliable Logic)
+4.  **Local Ollama** (100% Private Fallback)
+
+---
+
+## ⚡ Quick Start (2-Minute Setup)
 
 ```bash
 git clone https://github.com/me2Doc/friendlyclaw
@@ -40,45 +82,43 @@ cd friendlyclaw
 chmod +x friendlyclaw.sh && ./friendlyclaw.sh
 ```
 
-The Hive Wizard will guide you through:
-1.  **Platform Choice:** CLI (Terminal) or Telegram Bot.
-2.  **API Keys:** Setup for Gemini (Recommended), OpenRouter, or OpenAI.
-3.  **Onboarding:** Meet your partner and set your tactical goals.
+> [!TIP]
+> The setup script is an **interactive wizard**. It will check your dependencies (Node 22+, Python 3.10+), create your virtual environment, and walk you through API key configuration.
 
 ---
 
-## 📚 Documentation
+## 🕹️ Essential Commands
 
-Explore the depths of the Hive Mind:
-
-- **[🧠 Architecture](./docs/architecture/HIVE_MIND.md):** Deep dive into the Brain & Body system.
-- **[🕹️ Command Reference](./docs/guides/COMMANDS.md):** Full list of tools, skills, and missions.
-- **[🛠️ Setup Guide](./docs/guides/SETUP.md):** Pro tips for production deployment and local models.
-
----
-
-## 🧩 Structure at a Glance
-
-The project is organized into two primary domains:
-
-- **`brain/`**: The Intelligence Layer (Python). Contains reasoning (`core`), persistent memory (`memory`), interaction layers (`platforms`), and research tools (`tools`).
-- **`body/`**: The Execution Layer (Node.js). Renamed from `system_body`, this is the gateway to the host OS.
-- **`docs/`**: Professional documentation and architectural deep-dives.
-- **`data/`**: (Generated) Secure local storage for the SQLite brain and audit logs.
+| Command | Action |
+| :--- | :--- |
+| `/tasks` | View the background mission board. |
+| `/synthesize [id]` | Merge sub-agent findings into the chat. |
+| `/memory` | Query the AI's factual knowledge of you. |
+| `/model [name]` | Hot-swap models (e.g., `/model gpt-4o`). |
+| `/forget` | Wipe all local cognitive history. |
 
 ---
 
-## 🎯 Strategic Partnering
+## 🧠 Architecture: Brain & Body
 
-Use the Hive for more than just chat:
-- "Spawn a sub-agent to audit my server logs for the last 24 hours."
-- "Schedule a mission to check my GitHub notifications every hour."
-- "Run a visual pulse and tell me if my screen has any errors visible."
+The Hive is organized for technical excellence and modularity:
+
+- **`brain/`**: The Intelligence Layer (Python). Reasoning, Swarm management, and Semantic Memory.
+- **`body/`**: The Execution Layer (Node.js). Powered by OpenClaw with 50+ hooks (Shell, Spotify, Media, GitHub).
+- **`tools/`**: Professional research integrations like **Scrapling-Netrunner** for deep web intelligence.
+- **`data/`**: Your sovereign data vault. Logs, vectors, and the SQLite Hive database.
 
 ---
 
 ## 🚀 Vision
-FriendlyClaw is the digital extension of your own agency. It is a sovereign operative, built to evolve into the ultimate personal OS commander.
+FriendlyClaw is the digital extension of human agency. It is built for elite technical operators who need a partner that acts as a secure, proactive, and multi-threaded interface to their machine and the web.
+
+---
+
+## 📚 Deep Documentation
+- **[🧠 Architecture Deep-Dive](./docs/architecture/HIVE_MIND.md)**
+- **[🕹️ Full Command Reference](./docs/guides/COMMANDS.md)**
+- **[🛠️ Professional Setup Guide](./docs/guides/SETUP.md)**
 
 ---
 
