@@ -3,7 +3,8 @@ import chalk from 'chalk';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
+import open from 'open';
 import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +20,7 @@ async function verifyTelegram(token) {
 }
 
 async function main() {
-    p.intro(chalk.bgCyan.black(' FriendlyClaw Hive — Strategic Onboarding [v3.7] '));
+    p.intro(chalk.bgCyan.black(' FriendlyClaw Hive — Strategic Onboarding [v3.9] '));
 
     const proceed = await p.confirm({ message: 'Acknowledge system-level access and proceed?' });
     if (p.isCancel(proceed) || !proceed) { p.cancel('Operational shutdown.'); process.exit(1); }
@@ -43,34 +44,58 @@ async function main() {
         const authType = await p.select({
             message: 'Gemini Authentication Method',
             options: [
-                { value: 'oauth', label: 'Google Gemini CLI OAuth', hint: 'Browser Login' },
-                { value: 'api_key', label: 'Gemini API Key', hint: 'Direct Key' },
+                { value: 'oauth', label: 'Google Gemini CLI OAuth (Browser Flow)', hint: 'Best for local dev' },
+                { value: 'api_key', label: 'Gemini API Key (Direct)', hint: 'Best for servers' },
             ],
         });
 
         if (authType === 'oauth') {
-            const loginNow = await p.confirm({ message: 'Open browser now to authenticate with Google?' });
+            p.note('Starting Google Cloud Authentication flow...');
+            const loginNow = await p.confirm({ message: 'Launch browser for Google Login?' });
             if (loginNow) {
                 try {
-                    p.note('Launching browser for Google ADC login...');
-                    // This will open the browser and wait for login
+                    // ACTUALLY RUN THE COMMAND
+                    // We use spawn to keep it interactive in the same terminal
+                    console.log(chalk.yellow('\n--- GOOGLE LOGIN STARTING ---'));
                     execSync('gcloud auth application-default login', { stdio: 'inherit' });
-                    p.note(chalk.green('✔ Google Authentication successful.'));
+                    console.log(chalk.yellow('--- GOOGLE LOGIN COMPLETE ---\n'));
+                    
+                    p.note(chalk.green('✔ Google ADC credentials verified on system.'));
                     config.GEMINI_USE_OAUTH = 'true';
                 } catch (e) {
-                    p.note(chalk.red('✘ Google Login failed. Ensure "gcloud" CLI is installed.'));
-                    const retry = await p.confirm({ message: 'Continue anyway?' });
+                    p.note(chalk.red('✘ Login failed. Ensure "gcloud" CLI is installed and in PATH.'));
+                    const retry = await p.confirm({ message: 'Continue with manual key instead?' });
                     if (!retry) process.exit(1);
-                    config.GEMINI_USE_OAUTH = 'true';
+                    authType = 'api_key';
                 }
             }
-        } else {
-            const key = await p.password({ message: 'Enter Gemini API Key' });
+        }
+        
+        if (authType === 'api_key') {
+            p.note('Opening Google AI Studio to generate your key...');
+            await open('https://aistudio.google.com/app/apikey');
+            const key = await p.password({ message: 'Paste your Gemini API Key here' });
             if (p.isCancel(key)) process.exit(1);
             config.GEMINI_API_KEY = key;
             config.GEMINI_USE_OAUTH = 'false';
         }
         config.MODEL_NAME = 'gemini-3.1-pro';
+
+    } else if (provider === 'openai') {
+        p.note('Opening OpenAI Dashboard...');
+        await open('https://platform.openai.com/api-keys');
+        const key = await p.password({ message: 'Paste your OpenAI API Key' });
+        if (p.isCancel(key)) process.exit(1);
+        config.OPENAI_API_KEY = key;
+        config.MODEL_NAME = 'gpt-5.4';
+
+    } else if (provider === 'anthropic') {
+        p.note('Opening Anthropic Console...');
+        await open('https://console.anthropic.com/settings/keys');
+        const key = await p.password({ message: 'Paste your Anthropic API Key' });
+        if (p.isCancel(key)) process.exit(1);
+        config.ANTHROPIC_API_KEY = key;
+        config.MODEL_NAME = 'claude-4-6-sonnet';
     }
 
     // 2. Channel & Platform Verification
@@ -85,7 +110,9 @@ async function main() {
     config.PLATFORM = platform;
 
     if (platform === 'telegram') {
-        const token = await p.password({ message: 'Enter Telegram Bot Token (@BotFather)' });
+        p.note('Opening @BotFather on Telegram...');
+        await open('https://t.me/botfather');
+        const token = await p.password({ message: 'Enter Telegram Bot Token' });
         if (p.isCancel(token)) process.exit(1);
 
         const s = p.spinner();
@@ -97,7 +124,7 @@ async function main() {
             config.TELEGRAM_BOT_TOKEN = token;
         } else {
             s.stop(chalk.red('✘ Invalid Bot Token. Connection failed.'));
-            const force = await p.confirm({ message: 'Save unverified token anyway?' });
+            const force = await p.confirm({ message: 'Save anyway?' });
             if (!force) process.exit(1);
             config.TELEGRAM_BOT_TOKEN = token;
         }
@@ -106,13 +133,13 @@ async function main() {
     // 3. System Write
     const envContent = Object.entries(config).map(([k, v]) => `${k}=${v}`).join('\n');
     fs.writeFileSync(ENV_FILE, envContent);
-    p.outro(chalk.bgGreen.black(' Deployment Ready '));
+    p.outro(chalk.bgGreen.black(' Strategic Deployment Finalized '));
 
     const action = await p.select({
         message: 'Action:',
         options: [
             { value: 'hatch', label: '🚀 Hatch Operative (Verify & Launch)' },
-            { value: 'exit', label: 'Exit' },
+            { value: 'exit', label: 'Return to Terminal' },
         ],
     });
     process.exit(action === 'hatch' ? 0 : 2);
