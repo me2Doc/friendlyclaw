@@ -26,6 +26,7 @@ CORE_SKILLS = {
     "memory": {"trigger": "/memory", "description": "Query the persistent memory store", "system": True},
     "forget": {"trigger": "/forget", "description": "Reset local memory and operational profile", "system": True},
     "model": {"trigger": "/model", "description": "Hot-swap the active inference model", "system": True},
+    "config": {"trigger": "/config", "description": "Update API keys and model settings", "system": True},
     "help": {"trigger": "/help", "description": "Display system documentation and capabilities", "system": True}
 }
 

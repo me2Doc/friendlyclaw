@@ -17,6 +17,9 @@ from brain.memory.memory import (
     get_pending_action, delete_pending_action
 )
 from brain.skills.skills import get_skill_prompt, get_help_text, get_all_skills
+from brain.core.config_manager import ConfigSession
+
+tg_config_sessions = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -39,6 +42,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     text = update.message.text or ""
+    
+    # Check for config session
+    if user_id in tg_config_sessions and tg_config_sessions[user_id].active:
+        result = tg_config_sessions[user_id].process_answer(text)
+        await update.message.reply_text(result["text"])
+        return
+
     state = get_onboarding_state(user_id)
 
     if not state["done"]:
@@ -166,6 +176,13 @@ async def cmd_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.environ["MODEL_NAME"] = context.args[0]
         await update.message.reply_text(f"Model: {context.args[0]}")
 
+async def cmd_config(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    session = ConfigSession()
+    tg_config_sessions[user_id] = session
+    text = session.start()
+    await update.message.reply_text(f"⚙️ *Configuration Update*\n\n{text}\n\nType *skip* to keep current value.", parse_mode="Markdown")
+
 def run_telegram():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token: raise ValueError("TELEGRAM_BOT_TOKEN missing")
@@ -177,6 +194,7 @@ def run_telegram():
     app.add_handler(CommandHandler("tasks", cmd_tasks))
     app.add_handler(CommandHandler("synthesize", cmd_synthesize))
     app.add_handler(CommandHandler("model", cmd_model))
+    app.add_handler(CommandHandler("config", cmd_config))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))

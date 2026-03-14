@@ -10,6 +10,8 @@ from brain.memory.memory import (
 )
 from brain.skills.skills import get_skill_prompt, get_help_text, get_all_skills
 
+from brain.core.config_manager import cli_config_session
+
 USER_ID = "cli_user"
 
 async def cli_chat():
@@ -61,9 +63,19 @@ async def cli_chat():
         if not user_input:
             continue
 
+        if cli_config_session.active:
+            result = cli_config_session.process_answer(user_input)
+            print(f"\n{result['text']}\n")
+            continue
+
         if user_input == "/quit":
             print(f"{agent_name}: Later.")
             break
+
+        if user_input == "/config":
+            next_q = cli_config_session.start()
+            print(f"\n[CONFIG] {next_q}\n")
+            continue
 
         if user_input == "/help":
             print(f"\n{get_help_text().replace('*', '').replace('`', '')}\n")

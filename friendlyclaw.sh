@@ -60,6 +60,14 @@ fi
 source venv/bin/activate
 echo -e "${GREEN}✅ Virtual environment active${RESET}"
 
+# ── Force Setup ───────────────────────────────────────────
+if [[ "$*" == *"--setup"* ]] || [[ "$*" == *"-s"* ]]; then
+    if [ -f ".env" ]; then
+        echo -e "${YELLOW}⚠️ Existing .env found. Backing up and starting fresh...${RESET}"
+        mv .env .env.bak
+    fi
+fi
+
 # ── Install dependencies ──────────────────────────────────
 echo "📥 Installing dependencies..."
 pip install -q -r requirements.txt
