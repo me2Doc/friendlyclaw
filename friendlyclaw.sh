@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# FriendlyClaw — Strategic Hive Control Script (v3.5)
-# Professional CLI architecture mirroring OpenClaw commands.
+# FriendlyClaw — Strategic Hive Control Script (v3.8)
+# Professional CLI architecture with Dynamic Path Resolution.
 
-# Configuration
-INSTALL_DIR="/home/me2doc/friendlyclaw"
+# ── Dynamic Configuration ──────────────────────────────────
+# Resolve the directory where the script is located
+INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$INSTALL_DIR/venv"
 ENV_FILE="$INSTALL_DIR/.env"
 NODE_BIN="node"
@@ -16,6 +17,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 RESET='\033[0m'
 BOLD='\033[1m'
+DIM='\033[2m'
 
 show_banner() {
     echo -e "${CYAN}${BOLD}"
@@ -25,8 +27,8 @@ show_banner() {
     echo " / __/ / _, _// // /___/ /|  / /_/ / /___/ /  / /___/ /___/ ___ | |/ |/ /  "
     echo "/_/   /_/ |_/___/_____/_/ |_/_____/_____/_/   \____/_____/_/  |_|__/|__/   "
     echo -e "${RESET}"
-    echo -e "${BOLD}  FriendlyClaw — Strategic Hive Operative (v3.5.0)${RESET}"
-    echo -e "${DIM}  Your .env is showing; don't worry, I'll pretend I didn't see it.${RESET}"
+    echo -e "${BOLD}  FriendlyClaw — Strategic Hive Operative (v3.8.0)${RESET}"
+    echo -e "${DIM}  Dynamic Path: $INSTALL_DIR${RESET}"
     echo ""
 }
 
@@ -36,31 +38,57 @@ show_help() {
     echo "Options:"
     echo "  -h, --help           Display help for command"
     echo "  -V, --version        Output the version number"
-    echo "  --no-color           Disable ANSI colors"
     echo ""
     echo "Commands:"
-    echo "  Hint: commands suffixed with * have subcommands. Run <command> --help for details."
-    echo "  agent                Run one agent turn via the CLI"
-    echo "  config *             Non-interactive config helpers (get/set/unset/file)"
-    echo "  configure            Interactive setup wizard for credentials and platform"
-    echo "  cron *               Manage scheduled missions (Heartbeat/Cron)"
-    echo "  dashboard            Open the World Monitor (Port 5173)"
-    echo "  doctor               Health checks for the Brain & Body"
-    echo "  logs                 Tail brain file logs"
-    echo "  memory *             Search and reindex SQLite-Vec memory"
-    echo "  models *             Discover and configure LLM providers"
-    echo "  onboard              Full interactive onboarding wizard (TUI)"
-    echo "  security *           Security tools and local config audits"
-    echo "  skills *             List and inspect available Hive skills"
-    echo "  status               Show Hive health and active workers"
-    echo "  tui                  Open a terminal UI connected to the Brain"
-    echo "  update *             Update FriendlyClaw and dependencies"
-    echo "  uninstall            Remove state and virtual environment"
-    echo ""
-    echo "Examples:"
-    echo "  friendlyclaw models list"
-    echo "  friendlyclaw memory search \"Project Lucy\""
-    echo "  friendlyclaw onboard"
+    echo "  start       Launch FriendlyClaw (Hatch TUI)"
+    echo "  onboard     Run the High-Fidelity Onboarding (OpenClaw Style)"
+    echo "  config *    Non-interactive config helpers (get/set/unset)"
+    echo "  status      Show Hive health and active workers"
+    echo "  memory *    Search and reindex SQLite-Vec memory"
+    echo "  models *    Discover and configure LLM providers"
+    echo "  security    Run a real-time security audit"
+    echo "  logs        Show recent execution logs"
+    echo "  update      Pull latest changes and update dependencies"
+    echo "  uninstall   Remove local state and virtual environment"
+}
+
+check_node_deps() {
+    if [ ! -d "$INSTALL_DIR/node_modules" ]; then
+        echo -e "${YELLOW}📦 First run detected. Installing TUI dependencies...${RESET}"
+        cd "$INSTALL_DIR"
+        npm install --omit=optional -q
+        echo -e "${GREEN}✅ Node dependencies ready.${RESET}"
+    fi
+}
+
+onboard() {
+    check_node_deps
+    cd "$INSTALL_DIR"
+    $NODE_BIN onboard.mjs
+    return $?
+}
+
+start_app() {
+    if [ ! -f "$ENV_FILE" ]; then
+        onboard
+        EXIT_CODE=$?
+        [ $EXIT_CODE -ne 0 ] && exit 0
+    fi
+
+    # Virtual Environment check/init
+    if [ ! -d "$VENV_DIR" ]; then
+        echo "📦 Initializing virtual environment..."
+        python3 -m venv "$VENV_DIR"
+    fi
+    
+    source "$VENV_DIR/bin/activate"
+    
+    # Python dependencies (quietly)
+    pip install -q -r "$INSTALL_DIR/requirements.txt"
+
+    echo -e "${GREEN}${BOLD}🚀 Launching Hive Brain...${RESET}"
+    cd "$INSTALL_DIR"
+    python3 main.py
 }
 
 run_python_cmd() {
@@ -70,7 +98,6 @@ run_python_cmd() {
     fi
     source "$VENV_DIR/bin/activate"
     cd "$INSTALL_DIR"
-    # Execute a specific Python entrypoint for CLI commands
     python3 main.py --cli "$@"
 }
 
@@ -81,32 +108,24 @@ COMMAND=${1:-start}
 case $COMMAND in
     start|tui)
         show_banner
-        # Standard launch
-        if [ ! -f "$ENV_FILE" ]; then
-            $NODE_BIN onboard.mjs
-            [ $? -ne 0 ] && exit 0
-        fi
-        source "$VENV_DIR/bin/activate"
-        cd "$INSTALL_DIR"
-        python3 main.py
+        start_app
         ;;
     onboard|configure)
-        show_banner
-        cd "$INSTALL_DIR"
-        $NODE_BIN onboard.mjs
+        onboard
         ;;
     config)
         shift
-        # Implement config logic...
+        run_python_cmd config "$@"
         ;;
     models|memory|status|cron|skills|security|doctor)
         run_python_cmd "$@"
         ;;
     logs)
-        tail -f "$INSTALL_DIR/logs/brain.log" 2>/dev/null || echo "No logs found."
+        tail -f "$INSTALL_DIR/logs/brain.log" 2>/dev/null || tail -f "$INSTALL_DIR/logs/gateway.log" 2>/dev/null || echo "No logs found."
         ;;
     update)
         echo "🔄 Updating FriendlyClaw..."
+        cd "$INSTALL_DIR"
         git pull
         source "$VENV_DIR/bin/activate"
         pip install -r requirements.txt
@@ -116,19 +135,18 @@ case $COMMAND in
         echo -e "${RED}${BOLD}⚠️  UNINSTALLING FRIENDLYCLAW STATE${RESET}"
         read -p "Are you sure? This will delete venv and .env [y/N]: " CONFIRM
         if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
-            rm -rf "$VENV_DIR" "$ENV_FILE"
+            rm -rf "$VENV_DIR" "$ENV_FILE" "$INSTALL_DIR/node_modules"
             echo -e "${GREEN}Cleanup complete.${RESET}"
         fi
         ;;
     version|-V)
-        echo "FriendlyClaw v3.5.0-hive"
+        echo "FriendlyClaw v3.8.0-hive"
         ;;
     help|--help|-h)
         show_banner
         show_help
         ;;
     *)
-        # Default to showing help if unknown
         show_banner
         show_help
         exit 1
