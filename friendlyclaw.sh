@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# FriendlyClaw — Strategic Hive Control Script (v3.8)
-# Professional CLI architecture with Dynamic Path Resolution.
+# FriendlyClaw — Strategic Hive Control Script (v3.8.1)
+# Professional CLI architecture with Robust Path Resolution.
 
 # ── Dynamic Configuration ──────────────────────────────────
-# Resolve the directory where the script is located
-INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve the physical directory where the script is located (handle symlinks)
+PHYSICAL_SCRIPT_PATH=$(readlink -f "${BASH_SOURCE[0]}")
+INSTALL_DIR=$(dirname "$PHYSICAL_SCRIPT_PATH")
 VENV_DIR="$INSTALL_DIR/venv"
 ENV_FILE="$INSTALL_DIR/.env"
 NODE_BIN="node"
@@ -27,8 +28,8 @@ show_banner() {
     echo " / __/ / _, _// // /___/ /|  / /_/ / /___/ /  / /___/ /___/ ___ | |/ |/ /  "
     echo "/_/   /_/ |_/___/_____/_/ |_/_____/_____/_/   \____/_____/_/  |_|__/|__/   "
     echo -e "${RESET}"
-    echo -e "${BOLD}  FriendlyClaw — Strategic Hive Operative (v3.8.0)${RESET}"
-    echo -e "${DIM}  Dynamic Path: $INSTALL_DIR${RESET}"
+    echo -e "${BOLD}  FriendlyClaw — Strategic Hive Operative (v3.8.1)${RESET}"
+    echo -e "${DIM}  Install Path: $INSTALL_DIR${RESET}"
     echo ""
 }
 
@@ -140,7 +141,7 @@ case $COMMAND in
         fi
         ;;
     version|-V)
-        echo "FriendlyClaw v3.8.0-hive"
+        echo "FriendlyClaw v3.8.1-hive"
         ;;
     help|--help|-h)
         show_banner

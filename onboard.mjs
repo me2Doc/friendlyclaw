@@ -20,7 +20,7 @@ async function verifyTelegram(token) {
 }
 
 async function main() {
-    p.intro(chalk.bgCyan.black(' FriendlyClaw Hive — Strategic Onboarding [v3.9] '));
+    p.intro(chalk.bgCyan.black(' FriendlyClaw Hive — Strategic Onboarding [v3.9.1] '));
 
     const proceed = await p.confirm({ message: 'Acknowledge system-level access and proceed?' });
     if (p.isCancel(proceed) || !proceed) { p.cancel('Operational shutdown.'); process.exit(1); }
@@ -54,16 +54,17 @@ async function main() {
             const loginNow = await p.confirm({ message: 'Launch browser for Google Login?' });
             if (loginNow) {
                 try {
-                    // ACTUALLY RUN THE COMMAND
-                    // We use spawn to keep it interactive in the same terminal
                     console.log(chalk.yellow('\n--- GOOGLE LOGIN STARTING ---'));
+                    console.log(chalk.dim('Please follow the browser instructions and ensure you check all consent boxes.'));
+                    // Using --no-browser if they want, but standard is fine if they just click the boxes.
+                    // Let's stick to standard but add a tip about the checkbox.
                     execSync('gcloud auth application-default login', { stdio: 'inherit' });
                     console.log(chalk.yellow('--- GOOGLE LOGIN COMPLETE ---\n'));
                     
                     p.note(chalk.green('✔ Google ADC credentials verified on system.'));
                     config.GEMINI_USE_OAUTH = 'true';
                 } catch (e) {
-                    p.note(chalk.red('✘ Login failed. Ensure "gcloud" CLI is installed and in PATH.'));
+                    p.note(chalk.red('✘ Login failed or was cancelled.'));
                     const retry = await p.confirm({ message: 'Continue with manual key instead?' });
                     if (!retry) process.exit(1);
                     authType = 'api_key';
@@ -71,7 +72,7 @@ async function main() {
             }
         }
         
-        if (authType === 'api_key') {
+        if (authType === 'api_key' || !config.GEMINI_USE_OAUTH) {
             p.note('Opening Google AI Studio to generate your key...');
             await open('https://aistudio.google.com/app/apikey');
             const key = await p.password({ message: 'Paste your Gemini API Key here' });
@@ -88,14 +89,6 @@ async function main() {
         if (p.isCancel(key)) process.exit(1);
         config.OPENAI_API_KEY = key;
         config.MODEL_NAME = 'gpt-5.4';
-
-    } else if (provider === 'anthropic') {
-        p.note('Opening Anthropic Console...');
-        await open('https://console.anthropic.com/settings/keys');
-        const key = await p.password({ message: 'Paste your Anthropic API Key' });
-        if (p.isCancel(key)) process.exit(1);
-        config.ANTHROPIC_API_KEY = key;
-        config.MODEL_NAME = 'claude-4-6-sonnet';
     }
 
     // 2. Channel & Platform Verification
