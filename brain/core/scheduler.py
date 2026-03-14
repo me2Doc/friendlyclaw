@@ -4,7 +4,7 @@ import logging
 import asyncio
 from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.jobstores.sqlite import SQLAlchemyJobStore
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from brain.memory.memory import DB_PATH
 
 logger = logging.getLogger("FriendlyClaw.Scheduler")
